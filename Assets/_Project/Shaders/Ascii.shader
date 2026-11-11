@@ -321,6 +321,9 @@ Shader "Hidden/Aelid/Ascii"
                 int ly = AsciiRowsGoDown() ? local.y : cs - 1 - local.y; // glyph row, counted from the top
                 int gx = (local.x * ASCII_GLYPH) / cs;
                 int gy = (ly * ASCII_GLYPH) / cs;
+                // Alternate blade lean without rotating edge glyphs or changing camera stability.
+                if (row == 6 && col < ASCII_LEVELS && AsciiHash2(AsciiWorldCell(cell) + int2(43, 71)) < 0.5)
+                    gx = ASCII_GLYPH - 1 - gx;
                 int2 atlasTexel = int2(col * ASCII_GLYPH + gx, ASCII_ATLAS_SIZE - 1 - (row * ASCII_GLYPH + gy));
                 float ink = LOAD_TEXTURE2D(_AsciiGlyphAtlas, atlasTexel).r;
 

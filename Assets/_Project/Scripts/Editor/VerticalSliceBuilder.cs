@@ -65,6 +65,16 @@ namespace Aelid.EditorTools
             Build();
         }
 
+        [MenuItem("Aelid/Setup/Refresh Ground Materials")]
+        public static void RefreshGroundMaterials()
+        {
+            GroundMaterials.WriteLayout(k_Paths, k_Ruins, PathHalfWidth);
+            GroundMaterials.Get("Terrain_GrassA");
+            GroundMaterials.Get("Terrain_GrassB");
+            GroundMaterials.Get("Terrain_Dirt");
+            AssetDatabase.SaveAssets();
+        }
+
         public static void Build()
         {
             ProjectSetup.Apply();
@@ -164,6 +174,7 @@ namespace Aelid.EditorTools
 
         static void BuildTerrain(Transform world)
         {
+            GroundMaterials.WriteLayout(k_Paths, k_Ruins, PathHalfWidth);
             var root = new GameObject("Terrain").transform;
             root.SetParent(world, false);
 
@@ -199,9 +210,11 @@ namespace Aelid.EditorTools
                     else { AddTri(i00, i01, i10); AddTri(i10, i01, i11); }
                 }
 
-            AddTerrainPart(root, "Grass A", buckets["GrassA"], Mat("Terrain_GrassA", new Color(0.15f, 0.34f, 0.22f)), AsciiSurfaceClass.Grass);
-            AddTerrainPart(root, "Grass B", buckets["GrassB"], Mat("Terrain_GrassB", new Color(0.19f, 0.38f, 0.25f)), AsciiSurfaceClass.Grass);
-            AddTerrainPart(root, "Dirt", buckets["Dirt"], Mat("Terrain_Dirt", new Color(0.29f, 0.29f, 0.32f)), AsciiSurfaceClass.Default);
+            // Grass and dirt: main's textured ground shader (colours live in Ground.shader).
+            // Rock and sand: the swordsman branch's darker, cooler palette.
+            AddTerrainPart(root, "Grass A", buckets["GrassA"], GroundMaterials.Get("Terrain_GrassA"), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Grass B", buckets["GrassB"], GroundMaterials.Get("Terrain_GrassB"), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Dirt", buckets["Dirt"], GroundMaterials.Get("Terrain_Dirt"), AsciiSurfaceClass.Default);
             AddTerrainPart(root, "Rock", buckets["Rock"], Mat("Terrain_Rock", new Color(0.34f, 0.38f, 0.43f)), AsciiSurfaceClass.Stone);
             AddTerrainPart(root, "Sand", buckets["Sand"], Mat("Terrain_Sand", new Color(0.40f, 0.40f, 0.38f)), AsciiSurfaceClass.Default);
             AddTerrainPart(root, "Snow", buckets["Snow"], Mat("Terrain_Snow", new Color(0.88f, 0.90f, 0.95f), 0.3f), AsciiSurfaceClass.Default);
@@ -537,7 +550,9 @@ namespace Aelid.EditorTools
                 float a = (float)s_Rng.NextDouble() * Mathf.PI * 2f;
                 float r = 1.8f + (float)s_Rng.NextDouble() * 5f;
                 Vector3 p = Ground(c.x + Mathf.Cos(a) * r, c.z + Mathf.Sin(a) * r);
-                rubble.Box(p + Vector3.up * 0.06f, new Vector3(1.0f, 0.12f, 1.0f), Quaternion.Euler(0, (float)s_Rng.NextDouble() * 90f, 0));
+                // Keep the same random draws so changing the floor does not reshuffle the rest of the world.
+                float yaw = (float)s_Rng.NextDouble() * 90f;
+                RuinFloorTiles.AddTo(rubble, p, yaw, i);
             }
             MeshObject("Rubble", root, SaveMesh(rubble.ToMesh("Ruins_Rubble")), mossStone, AsciiSurfaceClass.Stone, Vector3.zero, Quaternion.identity, Vector3.one, true);
 
@@ -992,6 +1007,8 @@ namespace Aelid.EditorTools
                 material.DisableKeyword("_EMISSION");
                 material.SetColor("_EmissionColor", Color.black);
             }
+            if (name == "Terrain_Rock" || name == "Rock" || name == "Stone" || name == "Ruin_Stone" || name == "Ruin_Moss")
+                StoneMaterials.Apply(material);
             EditorUtility.SetDirty(material);
             s_Materials[name] = material;
             return material;

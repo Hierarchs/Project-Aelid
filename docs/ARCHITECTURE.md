@@ -22,7 +22,7 @@ Gameplay does not reference Rendering, and Rendering does not reference Gameplay
 `AsciiRendererFeature` is a URP 17 RenderGraph feature added to `PC_Renderer` and `Mobile_Renderer`. It runs at **Before Post-Processing**, so bloom and color grading apply to the glyphs (fire and magic glyphs glow).
 
 ```
-lit 3D frame ─┬─► [1] Surface ID   redraw tagged renderers → R8 class mask (full res)
+lit 3D frame ─┬─► [1] Surface ID   renderer classes + ground coverage → R8 class mask (full res)
               ├─► [2] Reduce       per cell: average color, class, depth, normal (cell res, MRT)
               │       [3] Select   per cell: glyph = density ramp + dither, or line glyph on edges
               └─► [4] Composite    per pixel: blend glyphs by surface class; outline; sub-cell shift
@@ -83,10 +83,101 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 - **`WaterRipples`**: a 16-slot global ring buffer (`_WaterRipples`, `_WaterTime`) that anything can emit into. **`WaterRippleEmitter`** on a character emits a splash on entering, one ring per stride, and soft rings while standing. **`WaterBody`** answers "is this point in water, and at what height?"
 - The surface-ID pass draws transparent renderers after opaques, so water over a wading character's legs uses water glyphs and the exposed body uses the character blend.
 
+## Cliff and stone surfaces (Unity validation pending)
+
+`Aelid/Stone` adds world-space surface texture to `Terrain_Rock`, `Rock`, `Stone`,
+`Ruin_Stone`, and `Ruin_Moss` while retaining their existing base colours. Three
+planar projections blend by surface normal, so the pattern does not stretch up
+steep faces or require mesh UVs. Irregular cell boundaries form fractures, broad
+noise creates mineral variation, and filtered fine grain adds smaller detail.
+
+Natural cliff presets add wavy bedding bands by world height, strongest on steep
+faces. Flat stone reads as fractured plates instead. The carved ruin and general
+masonry presets disable geological banding and use finer, quieter joints. Sparse
+lichen follows upward ledges and recessed seams, with a stronger amount on the
+existing mossy ruins material.
+
+A bounded surface-gradient normal gives shallow lighting relief. Forward lighting
+and the depth-normal pass evaluate the same relief; shadow and depth passes retain
+the original geometry. Meshes, silhouettes, collision, the scene, and Stone ASCII
+class bits are unchanged. The existing ASCII pass receives the textured colour
+and relief normals without adding another render pass.
+
+`StoneMaterials` assigns the presets when a material first adopts the shader and
+keeps later texture-detail tuning. Full scene builds use it automatically. **Aelid → Setup
+→ Refresh Stone Materials** updates the five materials without rebuilding scene
+objects. Saved materials already reference the shader, so no scene rebuild is
+needed. Fracture frequency, layer strength, joint contrast, mineral grain, relief,
+and lichen remain editable per material.
+
+Validation: 18 DXC shader entry/variant compilations passed against the pinned URP
+headers, covering forward/clustered lighting, cascaded and screen-space shadows,
+instancing, depth, relief normals, octahedral normals, and punctual shadows. The
+material setup compiled against Unity's managed assemblies, and managed checks
+confirmed all five saved presets. GPU cost, Unity import, gameplay tests, visual
+captures, and camera stability remain unverified because the cloud editor has no
+license. The three-projection fracture calculation has not been profiled.
+
+## Grass and dirt surfaces (Unity validation pending)
+
+`Aelid/Ground` replaces flat colours on the three existing grass/dirt materials.
+It evaluates texture in world XZ coordinates without requiring mesh UVs: broad
+grass clumps, dry tips, fine blade strokes, damp/dry soil, small clods, and sparse
+pebbles. Detail strokes use pixel-footprint filtering. Nothing animates, so the
+material does not introduce deliberate texture movement beneath the ASCII grid.
+
+The grass and dirt buckets share the same colour field. Path shoulders blend
+with irregular edges, and the ruins have patches of exposed earth rather than
+material boundaries following terrain triangles. `GroundLayout.hlsl` is generated
+from the builder's path segments, ruins centre, and path width. Both full scene
+builds and **Aelid → Setup → Refresh Ground Materials** keep it in sync; the refresh
+command updates materials/layout without replacing scene objects. The saved
+materials already reference the shader, so a scene rebuild is unnecessary.
+
+The surface-ID RenderGraph pass draws ground's own `AelidGroundSurfaceId` pass
+after the opaque override IDs and before water IDs. Its world-locked coverage
+dithering chooses the existing Grass or Default class per pixel from the same
+blend used for colour. Grass blades and flowers therefore follow the grassy
+shoulders, while the path keeps dirt glyphs. Ground depth and normals are still
+tested normally, so foreground characters and water retain their classes. The
+composite also mirrors some grass density glyphs using the existing world-cell
+hash; line glyphs remain unchanged.
+
+Tune colours, detail strength, and path shoulder width on the ground materials.
+For unrelated ground areas, turn off **Follow Vertical Slice Paths** and use
+**Grass Amount**. The shader includes forward lighting, shadow caster, depth,
+depth-normal, and ASCII coverage passes; grass/dirt geometry and colliders are
+unchanged. The additional ID draws and procedural texture cost are not profiled.
+
+Validation: 26 DXC entry/variant compilations passed against the pinned URP
+headers, including the changed ASCII shader; ground setup/tests compile against
+Unity's managed assemblies; the managed layout export test and generated-layout
+comparison passed. Unity import, gameplay tests, captures, and the camera-motion
+stability measurement remain pending because the cloud editor has no license.
+
+## Ruins paving (Unity validation pending)
+
+`RuinFloorTiles` adds six repeating stone treatments to the existing 14 paving
+positions: lightly worn slabs, partly buried stones, lifted edges, long narrow
+slabs, chipped corners, and split slabs with open diagonal seams. Heights and
+tilts stay small enough for the player's 0.4 m step offset. The tiles remain in
+`Ruins_Rubble` with its existing Stone surface class, material, and mesh collider;
+they add no renderers or scene objects.
+
+The builder consumes the same random values as before, so the new shapes do not
+reshuffle vegetation or other scenery. The generated rubble mesh can be updated
+without changing `VerticalSlice.unity`, keeping independently placed vines and
+props intact. A full scene rebuild still overwrites hand edits; avoid it when
+merging custom scenery.
+
+Geometry tests cover closed, outward-facing stones, bounded step heights, and
+repeatability. Unity import, play tests, and visual capture status should be
+checked separately before treating the new paving as validated in game.
+
 ## Tests and tools
 
-- **Edit mode (9):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math (surface points and mirror images), the reflection camera's setup, and ripple expiry.
-- **Play mode (10):** loads the real scene and drives it with virtual input. Covers movement, sprinting, camera follow and framing lock, snap offsets, wading, morning mist, the night-only moon reflection, and the ASCII toggle.
+- **Edit mode (EDIT_COUNT):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry; plus ruin paving geometry and repeatability, and ground materials and layout export.
+- **Play mode (PLAY_COUNT):** loads the real scene and drives it with virtual input. Covers movement, sprinting, camera follow and framing lock, snap offsets, wading, morning mist, the night-only moon reflection, and the ASCII toggle. Any logged error fails the run.
 - **Captures:** 13 review shots (ASCII and raw), including morning mist and moonlight at the pond, plus the glyph atlas preview, reflection textures, and the stability report. Water time is frozen so shots are repeatable.
 - **Debug views:** `AsciiRuntimeOverrides.DebugView` shows scene passthrough, cell color, surface class, glyph color, or the atlas tiled across the screen (useful for orientation checks).
 

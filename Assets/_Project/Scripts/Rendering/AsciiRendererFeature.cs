@@ -12,7 +12,7 @@ namespace Aelid.Rendering
     /// URP renderer feature that turns the lit 3D frame into the hybrid ASCII image.
     ///
     /// Frame flow (all inside one ScriptableRenderPass, RenderGraph API):
-    ///   1. Surface ID   - redraw renderers carrying an ASCII class bit into an R8 mask
+    ///   1. Surface ID   - renderer classes plus per-pixel ground coverage in an R8 mask
     ///   2. Reduce       - per cell: average color, class, depth, normal  (cell res)
     ///   3. Select       - per cell: glyph index + glyph color            (cell res)
     ///   4. Composite    - per pixel: draw glyph, keep Exempt pixels 3D  (full res)
@@ -176,6 +176,7 @@ namespace Aelid.Rendering
             sealed class SurfaceIdPassData
             {
                 public RendererListHandle opaqueList;
+                public RendererListHandle groundList;
                 public RendererListHandle transparentList;
             }
 
@@ -281,8 +282,10 @@ namespace Aelid.Rendering
                         // Opaques first, then transparents (water) so a surface in
                         // front, e.g. water over a wading character's legs, wins.
                         data.opaqueList = CreateIdList(renderGraph, frameData, cameraData, RenderQueueRange.opaque, SortingCriteria.CommonOpaque);
+                        data.groundList = CreateGroundIdList(renderGraph, frameData, cameraData);
                         data.transparentList = CreateIdList(renderGraph, frameData, cameraData, RenderQueueRange.transparent, SortingCriteria.CommonTransparent);
                         builder.UseRendererList(data.opaqueList);
+                        builder.UseRendererList(data.groundList);
                         builder.UseRendererList(data.transparentList);
                         builder.SetRenderAttachmentDepth(activeDepth, AccessFlags.Read);
                     }
@@ -291,6 +294,8 @@ namespace Aelid.Rendering
                     {
                         if (d.opaqueList.IsValid())
                             ctx.cmd.DrawRendererList(d.opaqueList);
+                        if (d.groundList.IsValid())
+                            ctx.cmd.DrawRendererList(d.groundList);
                         if (d.transparentList.IsValid())
                             ctx.cmd.DrawRendererList(d.transparentList);
                     });
@@ -415,6 +420,18 @@ namespace Aelid.Rendering
                 drawing.overrideMaterial = m_SurfaceIdMaterial;
                 drawing.overrideMaterialPassIndex = 0;
                 var filtering = new FilteringSettings(queues, m_LayerMask, AsciiSurfaceLayers.AllClassBits);
+                return renderGraph.CreateRendererList(new RendererListParams(renderingData.cullResults, drawing, filtering));
+            }
+
+            RendererListHandle CreateGroundIdList(RenderGraph renderGraph, ContextContainer frameData, UniversalCameraData cameraData)
+            {
+                var renderingData = frameData.Get<UniversalRenderingData>();
+                var lightData = frameData.Get<UniversalLightData>();
+                // Use the ground material's coverage pass, including Default-layer dirt.
+                // This draws after opaque IDs and before water, with the same scene-depth test.
+                DrawingSettings drawing = RenderingUtils.CreateDrawingSettings(new ShaderTagId("AelidGroundSurfaceId"),
+                    renderingData, cameraData, lightData, SortingCriteria.CommonOpaque);
+                var filtering = new FilteringSettings(RenderQueueRange.opaque, m_LayerMask);
                 return renderGraph.CreateRendererList(new RendererListParams(renderingData.cullResults, drawing, filtering));
             }
 

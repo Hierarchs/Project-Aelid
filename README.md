@@ -12,8 +12,8 @@ An open-world fantasy MMORPG in **Unity 6 (URP)**: a fully 3D low-poly world ren
 - Playable low-poly swordsman with procedural idle, walk, and run animation
 - Day/night cycle with morning mist, cold moonlight, and warm firelight
 - Generated test area: village, wheat field, forest, pond, hilltop ruins
-- Water: planar reflections, a rippling moon reflection, wading ripples, and depth-blended shorelines
-- 19 automated tests (edit mode + play mode)
+- Water: planar reflections, a rippling moon reflection, ripple rings around wading characters, depth-blended shorelines, line-glyph water
+- Automated edit-mode and play-mode tests
 
 Not built yet: weather, combat, enemies, multiplayer (see the roadmap in the architecture doc).
 

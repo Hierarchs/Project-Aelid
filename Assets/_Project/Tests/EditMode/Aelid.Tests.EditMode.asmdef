@@ -8,7 +8,8 @@
         "Unity.RenderPipelines.Universal.Runtime",
         "Aelid.Rendering",
         "Aelid.Gameplay",
-        "Aelid.Environment"
+        "Aelid.Environment",
+        "Aelid.Editor"
     ],
     "includePlatforms": [
         "Editor"

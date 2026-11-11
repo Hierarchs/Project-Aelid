@@ -83,6 +83,41 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 - **`WaterRipples`**: a 16-slot global ring buffer (`_WaterRipples`, `_WaterTime`) that anything can emit into. **`WaterRippleEmitter`** on a character emits a splash on entering, one ring per stride, and soft rings while standing. **`WaterBody`** answers "is this point in water, and at what height?"
 - The surface-ID pass draws transparent renderers after opaques, so water over a wading character's legs becomes water glyphs while the body above stays 3D.
 
+## Cliff and stone surfaces (Unity validation pending)
+
+`Aelid/Stone` adds world-space surface texture to `Terrain_Rock`, `Rock`, `Stone`,
+`Ruin_Stone`, and `Ruin_Moss` while retaining their existing base colours. Three
+planar projections blend by surface normal, so the pattern does not stretch up
+steep faces or require mesh UVs. Irregular cell boundaries form fractures, broad
+noise creates mineral variation, and filtered fine grain adds smaller detail.
+
+Natural cliff presets add wavy bedding bands by world height, strongest on steep
+faces. Flat stone reads as fractured plates instead. The carved ruin and general
+masonry presets disable geological banding and use finer, quieter joints. Sparse
+lichen follows upward ledges and recessed seams, with a stronger amount on the
+existing mossy ruins material.
+
+A bounded surface-gradient normal gives shallow lighting relief. Forward lighting
+and the depth-normal pass evaluate the same relief; shadow and depth passes retain
+the original geometry. Meshes, silhouettes, collision, the scene, and Stone ASCII
+class bits are unchanged. The existing ASCII pass receives the textured colour
+and relief normals without adding another render pass.
+
+`StoneMaterials` assigns the presets when a material first adopts the shader and
+keeps later texture-detail tuning. Full scene builds use it automatically. **Aelid → Setup
+→ Refresh Stone Materials** updates the five materials without rebuilding scene
+objects. Saved materials already reference the shader, so no scene rebuild is
+needed. Fracture frequency, layer strength, joint contrast, mineral grain, relief,
+and lichen remain editable per material.
+
+Validation: 18 DXC shader entry/variant compilations passed against the pinned URP
+headers, covering forward/clustered lighting, cascaded and screen-space shadows,
+instancing, depth, relief normals, octahedral normals, and punctual shadows. The
+material setup compiled against Unity's managed assemblies, and managed checks
+confirmed all five saved presets. GPU cost, Unity import, gameplay tests, visual
+captures, and camera stability remain unverified because the cloud editor has no
+license. The three-projection fracture calculation has not been profiled.
+
 ## Grass and dirt surfaces (Unity validation pending)
 
 `Aelid/Ground` replaces flat colours on the three existing grass/dirt materials.

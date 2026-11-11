@@ -1031,6 +1031,8 @@ namespace Aelid.EditorTools
                 material.DisableKeyword("_EMISSION");
                 material.SetColor("_EmissionColor", Color.black);
             }
+            if (name == "Terrain_Rock" || name == "Rock" || name == "Stone" || name == "Ruin_Stone" || name == "Ruin_Moss")
+                StoneMaterials.Apply(material);
             EditorUtility.SetDirty(material);
             s_Materials[name] = material;
             return material;

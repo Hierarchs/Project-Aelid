@@ -10,6 +10,7 @@ namespace Aelid.Debugging
     /// Development HUD and hotkeys for evaluating the vertical slice.
     ///   F1  toggle ASCII          F2/F3  glyph density -/+
     ///   F4  toggle glyph snapping F5     toggle orthographic/perspective
+    ///   F6  cycle weather
     ///   T   fast time (x60)       [ / ]  time -1h / +1h
     ///   H   hide this panel
     /// </summary>
@@ -17,6 +18,7 @@ namespace Aelid.Debugging
     public sealed class DevOverlay : MonoBehaviour
     {
         public DayNightCycle dayNight;
+        public WeatherController weather;
         public IsometricCameraRig cameraRig;
         public AsciiCamera asciiCamera;
         public PlayerMotor player;
@@ -38,6 +40,7 @@ namespace Aelid.Debugging
             if (kb.f3Key.wasPressedThisFrame) AsciiRuntimeOverrides.CellSizeOffset = Mathf.Min(AsciiRuntimeOverrides.CellSizeOffset + 2, 16);
             if (kb.f4Key.wasPressedThisFrame && asciiCamera != null) asciiCamera.PixelSnap = !asciiCamera.PixelSnap;
             if (kb.f5Key.wasPressedThisFrame && cameraRig != null) cameraRig.orthographic = !cameraRig.orthographic;
+            if (kb.f6Key.wasPressedThisFrame && weather != null) weather.CycleWeather();
             if (kb.hKey.wasPressedThisFrame) m_Visible = !m_Visible;
 
             if (dayNight != null)
@@ -65,12 +68,13 @@ namespace Aelid.Debugging
             string text =
                 $"<b>AELID vertical slice</b>   {1f / Mathf.Max(m_SmoothedDelta, 1e-4f):0} fps\n" +
                 $"Time {h:00}:{m:00}{(m_FastTime ? "  (x60)" : "")}   night {(dayNight != null ? dayNight.NightFactor : 0f):0.00}\n" +
+                (weather != null ? $"Weather {weather.CurrentWeather}   wind {weather.WindStrength:0.00}\n" : "") +
                 $"ASCII {(AsciiRuntimeOverrides.Enabled ? "on" : "off")}  cell {cell}px  snap {(asciiCamera != null && asciiCamera.PixelSnap ? "on" : "off")}  " +
                 $"{(cameraRig != null && cameraRig.orthographic ? "ortho" : "persp")}\n" +
                 $"Speed {(player != null ? player.PlanarSpeed : 0f):0.0} m/s\n" +
-                "<color=#aaaaaa>WASD move  Shift run  Wheel zoom\nF1 ascii  F2/F3 density  F4 snap  F5 projection\nT fast time  [ ] hour  H hide</color>";
+                "<color=#aaaaaa>WASD move  Shift run  Wheel zoom\nF1 ascii  F2/F3 density  F4 snap  F5 projection\nF6 weather  T fast time  [ ] hour  H hide</color>";
 
-            var rect = new Rect(12, 12, 420, 140);
+            var rect = new Rect(12, 12, 420, 156);
             GUI.color = new Color(0f, 0f, 0f, 0.55f);
             GUI.DrawTexture(new Rect(rect.x - 6, rect.y - 4, rect.width, rect.height), Texture2D.whiteTexture);
             GUI.color = Color.white;

@@ -2568,6 +2568,7 @@ GameObject:
   m_Component:
   - component: {fileID: 73756662}
   - component: {fileID: 73756661}
+  - component: {fileID: 2147370901}
   m_Layer: 0
   m_Name: Environment
   m_TagString: Untagged
@@ -2575,6 +2576,30 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &2147370901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 73756660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4210a8fd72a04b8c80ed7097d4dbe33f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Aelid.Environment::Aelid.Environment.WeatherController
+  startingWeather: 0
+  transitionSeconds: 3
+  automaticChangeSeconds: 180
+  windDirection: {x: 0.85, y: 0.53}
+  followTarget: {fileID: 1925923676}
+  precipitationShader: {fileID: 4800000, guid: 8b33daf6be9d4cb8a75e748f88d5d32d, type: 3}
+  trees: {fileID: 137708606}
+  bushes: {fileID: 1471143332}
+  crops: {fileID: 266158446}
+  groundSurfaces:
+  - {fileID: 935435456}
+  - {fileID: 574159863}
 --- !u!114 &73756661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6059,6 +6084,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Aelid.Debugging::Aelid.Debugging.DevOverlay
   dayNight: {fileID: 73756661}
+  weather: {fileID: 2147370901}
   cameraRig: {fileID: 2070953415}
   asciiCamera: {fileID: 2070953414}
   player: {fileID: 1925923675}

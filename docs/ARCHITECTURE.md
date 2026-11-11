@@ -1,6 +1,6 @@
-# Architecture: Milestone 1 (visual foundation)
+# Architecture: Milestone 2 (weather prototype)
 
-Status as of 2026-11-10. **Working** means built, run, and checked by captures or automated tests. **Proposed** means planned but not built.
+**Working** means built, run, and checked by captures or automated tests. The weather prototype is ready for Unity playtesting.
 
 ## Modules
 
@@ -9,7 +9,7 @@ Each module is its own assembly, so compile-time dependencies stay explicit and 
 | Assembly | Folder | Depends on | Responsibility |
 |---|---|---|---|
 | `Aelid.Rendering` | `Scripts/Rendering` | URP | Hybrid ASCII renderer feature, glyph atlas, surface classes, glyph-stable camera snapping |
-| `Aelid.Environment` | `Scripts/Environment` | URP | Day/night cycle, night lights, flicker, water (reflection, ripples, water bodies) |
+| `Aelid.Environment` | `Scripts/Environment` | URP | Day/night, weather, vegetation wind, night lights, flicker, water (reflection, ripples, water bodies) |
 | `Aelid.Gameplay` | `Scripts/Gameplay` | Input System | Input → intent → motor, procedural animation, isometric camera rig |
 | `Aelid.Debugging` | `Scripts/Debugging` | all of the above | Dev HUD and hotkeys |
 | `Aelid.Editor` | `Scripts/Editor` | all | Scene builder, project setup, capture and stability tool |
@@ -35,16 +35,17 @@ lit 3D frame ─┬─► [1] Surface ID   redraw tagged renderers → R8 class 
 
 | Class | Glyph vocabulary (dark → bright) | Shadow density floor | ASCII amount | Use |
 |---|---|---|---|---|
-| Default | ` .-:=+%*@#` | 0.30 | 100% | dirt, sand, snow, misc |
+| Default | sparse dots | 0.14 | 80% | dirt, sand, snow, untagged surfaces |
 | Exempt | (none) | n/a | 0% (configurable) | players, important enemies: full 3D with a dark rim |
 | Foliage | ` .,;o8*&♣♠` | 0.60 | 100% | trees, bushes |
 | Water | ` .-~=░≈≋▒▓` + animated ripple | 0.15 | 100% | water |
 | Stone | ` .:oOS8QMB` (thin letters) | 0.55 | 100% | rocks, cliffs, ruins |
 | Emissive | ` .'^+%*A@#` | 0.40 | 45% | fire, lamps, spells |
-| Grass | 8 custom thin blade glyphs + sparkles | 0.65 | 100% | grassland |
+| Grass | 8 custom thin blade glyphs + sparkles | 0.40 | 100% | grassland |
 | Wood | ` .-=+xNH@#` | 0.50 | 100% | buildings, fences |
 
 - **Light response (style target: dark terminal-style ASCII).** The background is near-black, and glyph color is the *lit* surface color, so light pools, shadows and firelight read through color rather than glyph count. A per-class **density floor** keeps shadowed surfaces textured with dim glyphs instead of empty space. Fully unlit cells still go black. World-anchored **color jitter** and stronger dithering on grass break up repetition.
+- **Ground readability:** grass uses lower dithering and color jitter so its blade motion stays visible without competing with characters. Default surfaces retain a muted base-color fill with sparse dots, which keeps dirt routes readable in snow. Exempt silhouettes have a dark outer rim and a soft inner highlight.
 - **Sparkles:** a world-anchored sprinkle of accent glyphs on grass (and lightly on foliage). By day they are scene-lit white flowers. The Night volume turns them into self-lit, slowly pulsing HDR fireflies that bloom.
 - **Configuration:** the `Aelid/ASCII` volume component sets intensity, cell size (density), exposure, contrast, gamma, dither, density floor, glyph brightness, background fill, saturation, color normalize, color jitter, sparkles (density, color, self-lit, twinkle), edge sensitivity, Exempt and Emissive amounts, outline, and water ripple. Because it is a volume, settings blend: the Night volume raises glyph exposure and brightness and switches flowers to fireflies. Weather and local areas can do the same later.
 
@@ -74,6 +75,13 @@ This is exact for the orthographic camera, which is the default. In perspective 
 
 `DayNightCycle` moves one directional light: the sun by day, the moon by night (URP shadows only one main light). The handover happens at the horizon, where both are dark. It also drives trilight ambient, fog, the procedural skybox, and the Night volume weight. All color and density curves are gradients you can edit in the inspector. `NightLight` fades lamps and windows in at dusk, and `FlickerLight` animates firelight.
 
+## Weather (prototype)
+
+- `WeatherController` blends clear, rain, thunderstorm, snow, and snowstorm. F6 selects the next preset. Automatic changes default to 180 seconds and transitions default to three seconds. The day/night cycle evaluates its usual lighting first, then applies cloud dimming, fog and occasional thunderstorm flashes.
+- Rain and snow emitters follow the player and simulate falling particles in world space. Wind drives their horizontal drift. A material property block darkens wet grass and tints snowy ground.
+- Wind moves the 3D wheat, bushes, and tree crowns. The ASCII Select pass stores a bend for grass cells, and Composite applies it to the blade tips in the existing world-aligned cells. The grass roots, terrain, and tree colliders stay in place.
+- Review both storms at the wheat field with ASCII on and off, in daylight and at night. Thunder is visual in this prototype. Snow tint follows the weather blend. Accumulation and shelter-aware precipitation are future work.
+
 ## Water (working)
 
 The water renders as lit 3D, and the ASCII pass then turns it into horizontal line glyphs (`≡ ≈ = ~ -`). Reflections, ripples and light all come through the glyphs.
@@ -86,7 +94,7 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 ## Tests and tools
 
 - **Edit mode (9):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math (surface points and mirror images), the reflection camera's setup, and ripple expiry.
-- **Play mode (9):** loads the real scene and drives it with a virtual keyboard. W walks north and the camera follows; sprint speed; full speed at very high frame rates (regression test); ground contact; snap offsets stay within one cell; wading emits ripples; time progresses and night falls; F1 toggles ASCII. Any logged error fails the run.
+- **Play mode (10):** loads the real scene and drives it with a virtual keyboard. Covers walking, camera follow, sprinting, high-frame-rate movement, ground contact, snap offsets, wading ripples, time progression, the ASCII toggle, and stronger storm wind moving vegetation. Logged errors fail the run.
 - **Captures:** 11 review shots (ASCII and raw) across times of day, including wading in the pond, plus the glyph atlas preview, the mirror cameras' raw reflection textures, and the stability report. Water time is frozen, so shots are repeatable.
 - **Debug views:** `AsciiRuntimeOverrides.DebugView` shows scene passthrough, cell color, surface class, glyph color, or the atlas tiled across the screen (useful for orientation checks).
 
@@ -100,9 +108,9 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 - XR is not supported by the ASCII passes.
 - The scene is generated by `Aelid ▸ Build Vertical Slice Scene`. Rebuilding overwrites manual edits to that scene.
 
-## Proposed next milestones (not built)
+## Proposed next milestones
 
-1. **Weather M2:** a central `WeatherController` layered on `DayNightCycle`, with rain and snow particles (and an ASCII treatment for them via a transparent ID pass), wet and snowy surface response, and fog and wind. Snow accumulation would use a world-space top-down mask.
+1. **Weather M2 follow-up:** review readability and frame times in storms, then consider persistent snow accumulation and shelter-aware precipitation.
 2. **Combat M3:** stamina, light and heavy attacks, dodge with i-frames, and one enemy with telegraphed attacks, all built on the intent/motor split.
 3. **Look M2:** per-region ASCII volumes, an optional 6/10/12 px density preset menu, an overscan border fix, rivers/streams (flowing water reusing `Water.shader`), and wading slowdown.
 4. **Networking M4:** a two-player authoritative prototype (Netcode for GameObjects or a custom transport), replicating `PlayerIntent`.

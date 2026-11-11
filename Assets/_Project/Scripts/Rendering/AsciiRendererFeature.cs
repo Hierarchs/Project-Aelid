@@ -454,27 +454,27 @@ namespace Aelid.Rendering
                 // Per-class table: x = ASCII amount, y = atlas row, z = edges on, w = dither scale.
                 for (int i = 0; i < u.classParams.Length; i++)
                     u.classParams[i] = new Vector4(1f, i, 1f, 1f);
-                u.classParams[(int)AsciiSurfaceClass.Default] = new Vector4(1f, 0f, 1f, 1f);
+                u.classParams[(int)AsciiSurfaceClass.Default] = new Vector4(0.8f, 0f, 0f, 0.42f);
                 u.classParams[(int)AsciiSurfaceClass.Exempt] = new Vector4(s.exemptAscii.value, 1f, 0f, 1f);
                 u.classParams[(int)AsciiSurfaceClass.Foliage] = new Vector4(1f, 2f, 1f, 2.2f);
                 u.classParams[(int)AsciiSurfaceClass.Water] = new Vector4(1f, 3f, 0f, 1.2f);
                 u.classParams[(int)AsciiSurfaceClass.Stone] = new Vector4(1f, 4f, 1f, 2.6f); // mix letters like carved text
                 u.classParams[(int)AsciiSurfaceClass.Emissive] = new Vector4(s.emissiveAscii.value, 5f, 0f, 0.5f);
-                u.classParams[(int)AsciiSurfaceClass.Grass] = new Vector4(1f, 6f, 1f, 3.2f); // strong dither: organic blade variety
+                u.classParams[(int)AsciiSurfaceClass.Grass] = new Vector4(1f, 6f, 1f, 1.8f);
                 u.classParams[(int)AsciiSurfaceClass.Wood] = new Vector4(1f, 7f, 1f, 0.6f);
                 u.classParams[AsciiSurfaceLayers.SkyClass] = new Vector4(1f, AsciiSurfaceLayers.SkyClass, 0f, 0.5f);
 
-                // Per-class table 2: x = density floor (min glyph density in shadow), y = sparkle weight.
+                // Per-class table 2: x = density floor, y = sparkle weight, z = color jitter scale.
                 for (int i = 0; i < u.classParams2.Length; i++)
-                    u.classParams2[i] = new Vector4(0.25f, 0f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Default] = new Vector4(0.3f, 0f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Foliage] = new Vector4(0.6f, 0.15f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Water] = new Vector4(0.5f, 0f, 0f, 0f); // dark water stays lined
-                u.classParams2[(int)AsciiSurfaceClass.Stone] = new Vector4(0.55f, 0f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Emissive] = new Vector4(0.4f, 0f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Grass] = new Vector4(0.65f, 1f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Wood] = new Vector4(0.5f, 0f, 0f, 0f);
-                u.classParams2[AsciiSurfaceLayers.SkyClass] = Vector4.zero;
+                    u.classParams2[i] = new Vector4(0.25f, 0f, 1f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Default] = new Vector4(0.14f, 0f, 0.45f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Foliage] = new Vector4(0.6f, 0.15f, 1f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Water] = new Vector4(0.5f, 0f, 1f, 0f); // dark water stays lined
+                u.classParams2[(int)AsciiSurfaceClass.Stone] = new Vector4(0.55f, 0f, 1f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Emissive] = new Vector4(0.4f, 0f, 1f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Grass] = new Vector4(0.40f, 1f, 0.45f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Wood] = new Vector4(0.5f, 0f, 1f, 0f);
+                u.classParams2[AsciiSurfaceLayers.SkyClass] = new Vector4(0f, 0f, 1f, 0f);
 
                 Color sparkleColor = s.sparkleColor.value;
                 u.sparkle = new Vector4(sparkleColor.r, sparkleColor.g, sparkleColor.b, s.sparkleDensity.value);

@@ -205,6 +205,9 @@ Shader "Hidden/Aelid/Ascii"
                 }
 
                 int glyph = clamp((int)(saturate(density) * ASCII_LEVELS), 0, ASCII_LEVELS - 1);
+                // Sparse dots leave the ground under roads readable as a continuous shape.
+                if (surfaceClass == ASCII_CLASS_DEFAULT)
+                    glyph = noise + 0.5 < saturate(density) * 0.55 ? 1 : 0;
 
                 // --- Sparkles: sparse world-anchored accents (flowers / fireflies) ---
                 bool sparkle = classParams2.y > 0.0 && AsciiHash2(worldCell) < _AsciiSparkle.a * classParams2.y;
@@ -227,7 +230,7 @@ Shader "Hidden/Aelid/Ascii"
                 float l = max(AsciiLuminance(color), 1e-4);
                 color = max(lerp(l.xxx, color, _AsciiColor.z), 0.0);
                 float normalizeBoost = lerp(1.0, clamp(0.35 / l, 0.25, 6.0), _AsciiColor.w);
-                float jitter = 1.0 + (AsciiHash(worldCell + int2(17, 59)) - 0.5) * 2.0 * _AsciiSparkle2.z;
+                float jitter = 1.0 + (AsciiHash(worldCell + int2(17, 59)) - 0.5) * 2.0 * _AsciiSparkle2.z * classParams2.z;
                 float3 foreground = color * _AsciiColor.x * normalizeBoost * jitter;
 
                 if (sparkle)
@@ -241,7 +244,19 @@ Shader "Hidden/Aelid/Ascii"
                 }
 
                 int row = (int)classParams.y;
-                return float4(foreground, row * 16 + glyph);
+                int bend = 0;
+                if (surfaceClass == ASCII_CLASS_GRASS && glyph < ASCII_LEVELS && _AelidWeatherWind.w > 0.05)
+                {
+                    float3 worldWind = float3(_AelidWeatherWind.x, 0.0, _AelidWeatherWind.y);
+                    float windRight = mul((float3x3)UNITY_MATRIX_V, worldWind).x;
+                    float phase = _AelidWeatherWind.z * 3.4 - dot(float2(worldCell), float2(0.15, 0.09));
+                    float gust = 0.55 + 0.45 * sin(phase);
+                    bend = clamp((int)round(3.0 * windRight * gust), -3, 3);
+                }
+
+                // Keep the glyph in the low byte and carry the bend in the
+                // remaining bits. The largest packed value fits exactly in FP16.
+                return float4(foreground, ((bend + 3) << 8) | (row * 16 + glyph));
             }
             ENDHLSL
         }
@@ -283,12 +298,15 @@ Shader "Hidden/Aelid/Ascii"
 
                 float4 glyphData = LOAD_TEXTURE2D(_AsciiCellGlyph, cell);
                 float3 cellAverage = LOAD_TEXTURE2D(_AsciiCellColor, cell).rgb;
-                int code = (int)(glyphData.a + 0.5);
+                int packed = (int)(glyphData.a + 0.5);
+                int bend = (packed >> 8) - 3;
+                int code = packed & 255;
                 if ((int)_AsciiDebug.x == 5)
                 {
                     // Row index counted from the top so the atlas reads like the source table.
                     int screenRow = AsciiRowsGoDown() ? cell.y : int(_AsciiCell.w) - 1 - cell.y;
                     code = (screenRow % 16) * 16 + (cell.x % 16);
+                    bend = 0;
                     glyphData.rgb = 1.0;
                 }
                 int row = code >> 4;
@@ -297,8 +315,14 @@ Shader "Hidden/Aelid/Ascii"
                 int ly = AsciiRowsGoDown() ? local.y : cs - 1 - local.y; // glyph row, counted from the top
                 int gx = (local.x * ASCII_GLYPH) / cs;
                 int gy = (ly * ASCII_GLYPH) / cs;
-                int2 atlasTexel = int2(col * ASCII_GLYPH + gx, ASCII_ATLAS_SIZE - 1 - (row * ASCII_GLYPH + gy));
-                float ink = LOAD_TEXTURE2D(_AsciiGlyphAtlas, atlasTexel).r;
+                // The grass tips shift while their roots stay in the same cell.
+                gx -= (int)round(bend * (1.0 - gy / (ASCII_GLYPH - 1.0)));
+                float ink = 0.0;
+                if (gx >= 0 && gx < ASCII_GLYPH)
+                {
+                    int2 atlasTexel = int2(col * ASCII_GLYPH + gx, ASCII_ATLAS_SIZE - 1 - (row * ASCII_GLYPH + gy));
+                    ink = LOAD_TEXTURE2D(_AsciiGlyphAtlas, atlasTexel).r;
+                }
 
                 float3 background = cellAverage * _AsciiColor.y;
                 float3 ascii = lerp(background, glyphData.rgb, ink);
@@ -308,16 +332,23 @@ Shader "Hidden/Aelid/Ascii"
                 float amount = saturate(_AsciiClassParams[pixelClass].x) * _AsciiMisc.w;
                 float3 result = lerp(scene, ascii, amount);
 
-                // Dark rim around Exempt silhouettes (characters) for readability.
-                if (_AsciiMisc.z > 0.0 && pixelClass != ASCII_CLASS_EXEMPT)
+                // The outer rim separates silhouettes from snow. The subtle
+                // inner highlight keeps those same edges readable in shadows.
+                if (_AsciiMisc.z > 0.0)
                 {
                     int r = max(1, cs / 8);
-                    bool rim = LoadClass(qc + int2(r, 0), size) == ASCII_CLASS_EXEMPT
-                            || LoadClass(qc - int2(r, 0), size) == ASCII_CLASS_EXEMPT
-                            || LoadClass(qc + int2(0, r), size) == ASCII_CLASS_EXEMPT
-                            || LoadClass(qc - int2(0, r), size) == ASCII_CLASS_EXEMPT;
+                    bool exempt = pixelClass == ASCII_CLASS_EXEMPT;
+                    bool rim = ((LoadClass(qc + int2(r, 0), size) == ASCII_CLASS_EXEMPT) != exempt)
+                            || ((LoadClass(qc - int2(r, 0), size) == ASCII_CLASS_EXEMPT) != exempt)
+                            || ((LoadClass(qc + int2(0, r), size) == ASCII_CLASS_EXEMPT) != exempt)
+                            || ((LoadClass(qc - int2(0, r), size) == ASCII_CLASS_EXEMPT) != exempt);
                     if (rim)
-                        result = lerp(result, _AsciiOutlineColor.rgb, _AsciiMisc.z * _AsciiMisc.w);
+                    {
+                        float opacity = _AsciiMisc.z * _AsciiMisc.w;
+                        result = exempt
+                            ? lerp(result, max(result, 0.73), opacity * 0.38)
+                            : lerp(result, _AsciiOutlineColor.rgb, opacity);
+                    }
                 }
 
                 int debugView = (int)_AsciiDebug.x;

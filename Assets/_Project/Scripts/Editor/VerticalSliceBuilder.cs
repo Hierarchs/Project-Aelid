@@ -91,9 +91,21 @@ namespace Aelid.EditorTools
             var (cam, rig, asciiCam) = BuildCamera(player);
             waterReflection.sourceCamera = cam;
             var dayNight = BuildEnvironment();
+            var weather = dayNight.gameObject.AddComponent<WeatherController>();
+            weather.followTarget = player.transform;
+            weather.precipitationShader = Shader.Find("Aelid/Weather Precipitation");
+            weather.trees = world.Find("Trees");
+            weather.bushes = world.Find("Bushes");
+            weather.crops = world.Find("Wheat Field/Crops").GetComponent<MeshFilter>();
+            weather.groundSurfaces = new Renderer[]
+            {
+                world.Find("Terrain/Grass A").GetComponent<Renderer>(),
+                world.Find("Terrain/Grass B").GetComponent<Renderer>(),
+            };
 
             var debug = new GameObject("Dev Overlay").AddComponent<DevOverlay>();
             debug.dayNight = dayNight;
+            debug.weather = weather;
             debug.cameraRig = rig;
             debug.asciiCamera = asciiCam;
             debug.player = player.GetComponent<PlayerMotor>();

@@ -1,0 +1,50 @@
+AELID OAK GROVE KIT
+Layered foliage revision
+
+Open Aelid-Oak-Grove.blend. Golden Grove is the assembled isometric
+woodland. Oak Silhouettes shows the four trees side by side. Leaf Spray
+Sources shows the four oak sprigs, and Leaf Atlas Bake shows the
+orthographic layout used for the texture. Find the marked tree
+collections and spray objects under Current File in the Asset Browser.
+
+TREE MODELS
+
+Oak_Broadcrown   A stout trunk under a broad, rounded canopy
+Oak_Splitfork    A forked trunk and a gap between the upper crowns
+Oak_Windlean     A leaning trunk with a swept, asymmetric canopy
+Oak_Ancient      A spreading canopy with exposed roots and a bare snag
+
+Each FBX in FBX/Trees contains a Bark and a LeafCards mesh, with a
+ground-level pivot at the base of the trunk. Units are meters. Each
+canopy is formed by 378 quads grouped along the branches and around
+their ends. Smaller clusters soften the outline and leave gaps where
+the trunk and limbs show through. The grove scene adds the trail,
+flowers, stones, and lighting for the preview.
+
+LEAF SPRAYS
+
+Fan, Fork, Cascade, and Tip are branched sprigs with 30 individually
+modeled oak leaves each. FBX/Sprays contains the four mesh exports,
+with each pivot at the base of the twig.
+
+Oak-Leaf-Spray-Atlas.png is a 2048 x 2048 RGBA image. The 2 x 2 tiles
+read Fan, Fork, Cascade, Tip from upper left to lower right. The tree
+cards already have the corresponding UVs. Blender also packs the atlas
+into the project file.
+
+UNITY SETUP
+
+1. Import FBX/Trees and the atlas PNG. The four spray FBXs are available
+   for creating new arrangements or rebuilding the atlas.
+2. Assign LeafCards a double-sided, alpha-clipped foliage material.
+   Use atlas RGB as the leaf color and alpha as the cutout. Inspect
+   the cutoff at gameplay zoom with mipmaps enabled.
+3. The vertex color red channel carries the wind weight. Roots have a
+   weight of 0. Upper limbs and leaves flex as the weight increases.
+   The weather system can drive the wind strength.
+4. Apply the same cutout and vertex displacement to the color, shadow,
+   depth, and ASCII surface passes that render the foliage.
+
+The preview was rendered from the Blender assets. The FBXs were
+reimported in Blender to verify bounds, UVs, and wind weights. Unity
+shader wiring and in-game performance still need to be tested.

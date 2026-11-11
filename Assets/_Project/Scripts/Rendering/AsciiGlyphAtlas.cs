@@ -41,7 +41,13 @@ namespace Aelid.Rendering
         const char ThickTuft = '';
         const char Sward = '';
 
+        // Water: horizontal strokes only, so lakes read as rippling lines.
+        const char Dash = '';
+        const char WaterHatch = '';
+        const char WaterLines = '';
+
         static readonly string k_GrassBlades = new(new[] { ' ', '.', Sprout, Blade, TallBlade, TwinBlades, TallTwin, Tuft, ThickTuft, Sward });
+        static readonly string k_WaterLines = new(new[] { ' ', Dash, '-', '~', '=', '≡', '≈', WaterHatch, '≋', WaterLines });
 
         // Glyph vocabularies (any order; sorted by coverage at build time).
         // Dense surfaces use letters, as in classic ASCII art: walls read as text.
@@ -50,7 +56,7 @@ namespace Aelid.Rendering
             { (int)AsciiSurfaceClass.Default,  " .:-=+*#%@" },
             { (int)AsciiSurfaceClass.Exempt,   " .:-=+*#%@" },
             { (int)AsciiSurfaceClass.Foliage,  " .,;o*&8♣♠" },
-            { (int)AsciiSurfaceClass.Water,    " .-~=░≈≋▒▓" },
+            { (int)AsciiSurfaceClass.Water,    k_WaterLines },
             { (int)AsciiSurfaceClass.Stone,    " .:oO8SQMB" },
             { (int)AsciiSurfaceClass.Emissive, " .'^*+A#%@" },
             { (int)AsciiSurfaceClass.Grass,    k_GrassBlades },
@@ -112,6 +118,12 @@ namespace Aelid.Rendering
             { Tuft,       new[] { "........", "....X...", ".X..X..X", ".X..X.X.", "..X.X.X.", "..X.X.X.", "...XXX..", "...XX..." } },
             { ThickTuft,  new[] { "...X....", "X..X..X.", ".X.X.X..", ".X.X.X..", ".XX.X..X", "..X.X.X.", "..XXX.X.", "...XXX.." } },
             { Sward,      new[] { "X..X.X..", "X.X..X.X", ".XX.X.X.", "X.X.XX.X", ".XX.X.X.", "X.XXX.X.", ".XX.XXX.", "..XXXX.." } },
+
+            // Water lines.
+            { Dash,       new[] { "........", "........", "........", "........", "...XX...", "........", "........", "........" } },
+            { '≡',        new[] { "........", ".XXXXXX.", "........", ".XXXXXX.", "........", ".XXXXXX.", "........", "........" } },
+            { WaterHatch, new[] { "........", "XXX.XXXX", "........", ".XXXX.XX", "........", "XX.XXXX.", "........", "XXXX.XXX" } },
+            { WaterLines, new[] { "XXXXXXXX", "........", "XXXXXXXX", "........", "XXXXXXXX", "........", "XXXXXXXX", "........" } },
         };
 
         // Line glyphs. Diagonals run corner to corner so they connect across cells.

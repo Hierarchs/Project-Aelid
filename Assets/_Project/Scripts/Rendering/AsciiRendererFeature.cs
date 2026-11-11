@@ -173,7 +173,8 @@ namespace Aelid.Rendering
 
             sealed class SurfaceIdPassData
             {
-                public RendererListHandle rendererList;
+                public RendererListHandle opaqueList;
+                public RendererListHandle transparentList;
             }
 
             sealed class ReducePassData
@@ -275,21 +276,21 @@ namespace Aelid.Rendering
                     builder.SetRenderAttachment(surfaceId, 0, AccessFlags.Write);
                     if (canDrawIds)
                     {
-                        var renderingData = frameData.Get<UniversalRenderingData>();
-                        var lightData = frameData.Get<UniversalLightData>();
-                        DrawingSettings drawing = RenderingUtils.CreateDrawingSettings(k_ShaderTags, renderingData, cameraData, lightData, SortingCriteria.CommonOpaque);
-                        drawing.overrideMaterial = m_SurfaceIdMaterial;
-                        drawing.overrideMaterialPassIndex = 0;
-                        var filtering = new FilteringSettings(RenderQueueRange.opaque, m_LayerMask, AsciiSurfaceLayers.AllClassBits);
-                        data.rendererList = renderGraph.CreateRendererList(new RendererListParams(renderingData.cullResults, drawing, filtering));
-                        builder.UseRendererList(data.rendererList);
+                        // Opaques first, then transparents (water) so a surface in
+                        // front, e.g. water over a wading character's legs, wins.
+                        data.opaqueList = CreateIdList(renderGraph, frameData, cameraData, RenderQueueRange.opaque, SortingCriteria.CommonOpaque);
+                        data.transparentList = CreateIdList(renderGraph, frameData, cameraData, RenderQueueRange.transparent, SortingCriteria.CommonTransparent);
+                        builder.UseRendererList(data.opaqueList);
+                        builder.UseRendererList(data.transparentList);
                         builder.SetRenderAttachmentDepth(activeDepth, AccessFlags.Read);
                     }
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (SurfaceIdPassData d, RasterGraphContext ctx) =>
                     {
-                        if (d.rendererList.IsValid())
-                            ctx.cmd.DrawRendererList(d.rendererList);
+                        if (d.opaqueList.IsValid())
+                            ctx.cmd.DrawRendererList(d.opaqueList);
+                        if (d.transparentList.IsValid())
+                            ctx.cmd.DrawRendererList(d.transparentList);
                     });
                 }
 
@@ -403,6 +404,18 @@ namespace Aelid.Rendering
                 resourceData.cameraColor = output;
             }
 
+            RendererListHandle CreateIdList(RenderGraph renderGraph, ContextContainer frameData, UniversalCameraData cameraData,
+                RenderQueueRange queues, SortingCriteria sorting)
+            {
+                var renderingData = frameData.Get<UniversalRenderingData>();
+                var lightData = frameData.Get<UniversalLightData>();
+                DrawingSettings drawing = RenderingUtils.CreateDrawingSettings(k_ShaderTags, renderingData, cameraData, lightData, sorting);
+                drawing.overrideMaterial = m_SurfaceIdMaterial;
+                drawing.overrideMaterialPassIndex = 0;
+                var filtering = new FilteringSettings(queues, m_LayerMask, AsciiSurfaceLayers.AllClassBits);
+                return renderGraph.CreateRendererList(new RendererListParams(renderingData.cullResults, drawing, filtering));
+            }
+
             static TextureHandle CreateCellTexture(RenderGraph renderGraph, int w, int h, string name)
             {
                 var desc = new TextureDesc(w, h)
@@ -444,7 +457,7 @@ namespace Aelid.Rendering
                 u.classParams[(int)AsciiSurfaceClass.Default] = new Vector4(1f, 0f, 1f, 1f);
                 u.classParams[(int)AsciiSurfaceClass.Exempt] = new Vector4(s.exemptAscii.value, 1f, 0f, 1f);
                 u.classParams[(int)AsciiSurfaceClass.Foliage] = new Vector4(1f, 2f, 1f, 2.2f);
-                u.classParams[(int)AsciiSurfaceClass.Water] = new Vector4(1f, 3f, 0f, 0.6f);
+                u.classParams[(int)AsciiSurfaceClass.Water] = new Vector4(1f, 3f, 0f, 1.2f);
                 u.classParams[(int)AsciiSurfaceClass.Stone] = new Vector4(1f, 4f, 1f, 2.6f); // mix letters like carved text
                 u.classParams[(int)AsciiSurfaceClass.Emissive] = new Vector4(s.emissiveAscii.value, 5f, 0f, 0.5f);
                 u.classParams[(int)AsciiSurfaceClass.Grass] = new Vector4(1f, 6f, 1f, 3.2f); // strong dither: organic blade variety
@@ -456,7 +469,7 @@ namespace Aelid.Rendering
                     u.classParams2[i] = new Vector4(0.25f, 0f, 0f, 0f);
                 u.classParams2[(int)AsciiSurfaceClass.Default] = new Vector4(0.3f, 0f, 0f, 0f);
                 u.classParams2[(int)AsciiSurfaceClass.Foliage] = new Vector4(0.6f, 0.15f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Water] = new Vector4(0.15f, 0f, 0f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Water] = new Vector4(0.5f, 0f, 0f, 0f); // dark water stays lined
                 u.classParams2[(int)AsciiSurfaceClass.Stone] = new Vector4(0.55f, 0f, 0f, 0f);
                 u.classParams2[(int)AsciiSurfaceClass.Emissive] = new Vector4(0.4f, 0f, 0f, 0f);
                 u.classParams2[(int)AsciiSurfaceClass.Grass] = new Vector4(0.65f, 1f, 0f, 0f);

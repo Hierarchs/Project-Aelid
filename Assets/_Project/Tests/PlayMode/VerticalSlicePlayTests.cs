@@ -172,6 +172,39 @@ namespace Aelid.Tests
         }
 
         [UnityTest]
+        public IEnumerator Movement_KeepsFullSpeed_AtVeryHighFrameRates()
+        {
+            // Regression: CharacterController's default minMoveDistance dropped
+            // sub-millimetre steps, so the player crawled at thousands of FPS.
+            Assert.AreEqual(0f, m_Player.GetComponent<CharacterController>().minMoveDistance);
+            Vector3 start = m_Player.transform.position;
+            Hold(Key.S);
+            yield return new WaitForSeconds(1.0f);
+            Release();
+            Assert.Greater(Vector3.Distance(start, m_Player.transform.position), 2.5f);
+        }
+
+        [UnityTest]
+        public IEnumerator WadingThroughThePond_EmitsRipples()
+        {
+            var emitter = m_Player.GetComponent<WaterRippleEmitter>();
+            Assert.IsNotNull(emitter, "Player should carry a WaterRippleEmitter.");
+            Assert.IsTrue(Physics.Raycast(new Vector3(24.5f, 50f, -11f), Vector3.down, out var bed, 100f));
+            m_Player.Teleport(bed.point + Vector3.up * 0.05f);
+            WaterRipples.Clear();
+            yield return null;
+
+            Vector3 start = m_Player.transform.position;
+            Hold(Key.A);
+            yield return new WaitForSeconds(1.2f);
+            Release();
+
+            Assert.IsTrue(emitter.InWater, "Player should be standing in the pond.");
+            Assert.Greater(Vector3.Distance(start, m_Player.transform.position), 2f, "Player should be able to wade.");
+            Assert.GreaterOrEqual(WaterRipples.CountActive(2.6f), 2, "Entering and striding should leave ripples.");
+        }
+
+        [UnityTest]
         public IEnumerator DebugToggle_DisablesAndRestoresAscii()
         {
             Assert.IsTrue(AsciiRuntimeOverrides.Enabled);

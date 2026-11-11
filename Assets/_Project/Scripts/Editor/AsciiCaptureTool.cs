@@ -29,6 +29,7 @@ namespace Aelid.EditorTools
             public Vector2 player;
             public float facing;
             public float zoom;
+            public bool wading; // spawn a few ripple rings around the player
         }
 
         static readonly Shot[] k_Shots =
@@ -42,6 +43,8 @@ namespace Aelid.EditorTools
             new() { name = "07_closeup_player", hour = 11f, player = new Vector2(2f, -7f), facing = 160f, zoom = 5f },
             new() { name = "08_night_camp_meadow", hour = 23.5f, player = new Vector2(12f, 14.6f), facing = 15f, zoom = 7f },
             new() { name = "09_day_camp_meadow", hour = 14f, player = new Vector2(12f, 14.6f), facing = 15f, zoom = 7f },
+            new() { name = "10_night_pond_wading", hour = 23.3f, player = new Vector2(24.5f, -11f), facing = 200f, zoom = 6.5f, wading = true },
+            new() { name = "11_day_pond_wading", hour = 10.5f, player = new Vector2(24.5f, -11f), facing = 200f, zoom = 6.5f, wading = true },
         };
 
         public static string OutputDirectory => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Captures"));
@@ -144,6 +147,8 @@ namespace Aelid.EditorTools
             rt.Create();
             cam.targetTexture = rt;
 
+            // Freeze water animation so captures are repeatable.
+            WaterRipples.TimeOverride = 37f;
             try
             {
                 SaveAtlasPreview();
@@ -158,6 +163,9 @@ namespace Aelid.EditorTools
                     RenderToTextureAndDiscard(cam, rt); // let volumes/grading settle on the new time of day
                     SavePng(RenderToTexture(cam, rt), shot.name + ".png");
 
+                    if (shot.wading)
+                        SaveReflectionTextures(shot.name);
+
                     rig.SnapToTarget();
                     AsciiRuntimeOverrides.Enabled = false;
                     SavePng(RenderToTexture(cam, rt), shot.name + "_raw.png");
@@ -171,6 +179,8 @@ namespace Aelid.EditorTools
             finally
             {
                 AsciiRuntimeOverrides.Enabled = true;
+                WaterRipples.TimeOverride = null;
+                WaterRipples.Clear();
                 cam.targetTexture = null;
                 rt.Release();
                 UnityEngine.Object.DestroyImmediate(rt);
@@ -187,6 +197,17 @@ namespace Aelid.EditorTools
             dayNight.SetTime(shot.hour);
             foreach (var night in UnityEngine.Object.FindObjectsByType<NightLight>())
                 night.Refresh();
+
+            WaterRipples.Clear();
+            if (shot.wading)
+            {
+                // Rings of different ages around the wader, plus a stray splash nearby.
+                var at = new Vector3(shot.player.x, VerticalSliceBuilder.WaterLevel, shot.player.y);
+                WaterRipples.Emit(at, 1.0f, age: 0.35f);
+                WaterRipples.Emit(at, 0.8f, age: 1.0f);
+                WaterRipples.Emit(at, 0.6f, age: 1.7f);
+                WaterRipples.Emit(at + new Vector3(3.2f, 0f, 2.0f), 0.9f, age: 0.7f);
+            }
         }
 
         /// <summary>
@@ -200,6 +221,10 @@ namespace Aelid.EditorTools
 
         static Texture2D RenderToTexture(Camera cam, RenderTexture rt)
         {
+            // Camera.Render() renders only this camera, so update water first.
+            WaterRipples.Publish();
+            foreach (var reflection in UnityEngine.Object.FindObjectsByType<PlanarReflection>())
+                reflection.RenderImmediate();
             cam.Render();
             var previous = RenderTexture.active;
             RenderTexture.active = rt;
@@ -208,6 +233,26 @@ namespace Aelid.EditorTools
             texture.Apply();
             RenderTexture.active = previous;
             return texture;
+        }
+
+        /// <summary>Writes what each water mirror camera rendered (diagnostics).</summary>
+        static void SaveReflectionTextures(string shotName)
+        {
+            foreach (var reflection in UnityEngine.Object.FindObjectsByType<PlanarReflection>())
+            {
+                RenderTexture source = reflection.Texture;
+                if (source == null) continue;
+                var ldr = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+                Graphics.Blit(source, ldr);
+                var previous = RenderTexture.active;
+                RenderTexture.active = ldr;
+                var texture = new Texture2D(ldr.width, ldr.height, TextureFormat.RGB24, false);
+                texture.ReadPixels(new Rect(0, 0, ldr.width, ldr.height), 0, 0);
+                texture.Apply();
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(ldr);
+                SavePng(texture, $"{shotName}_reflection.png");
+            }
         }
 
         static void SavePng(Texture2D texture, string fileName)

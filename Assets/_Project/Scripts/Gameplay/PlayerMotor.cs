@@ -36,7 +36,13 @@ namespace Aelid.Gameplay
 
         public bool IsGrounded => m_Controller != null && m_Controller.isGrounded;
 
-        void Awake() => m_Controller = GetComponent<CharacterController>();
+        void Awake()
+        {
+            m_Controller = GetComponent<CharacterController>();
+            // The default (1 mm) silently drops per-frame moves at very high frame rates,
+            // so the character crawls on fast machines. Always apply every move.
+            m_Controller.minMoveDistance = 0f;
+        }
 
         public void Tick(in PlayerIntent intent, float dt)
         {

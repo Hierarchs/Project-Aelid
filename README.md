@@ -5,7 +5,7 @@ An open-world fantasy MMORPG in **Unity 6 (URP)**: a fully 3D low-poly world ren
 - Creative brief: [docs/VISION.md](docs/VISION.md)
 - Technical architecture and status: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-## Status: Milestone 1, visual foundation (working)
+## Status: Milestone 2, weather prototype
 
 - Hybrid ASCII renderer (URP RenderGraph feature): dark terminal-style look where glyph colour carries the lighting, per-surface glyph vocabularies (thin grass blades, letter-textured stone), flower/firefly sparkles, edge line glyphs, and characters kept in full 3D
 - Glyph-stable camera: 0.00% glyph change while scrolling (measured; ~42% without it)
@@ -14,9 +14,10 @@ An open-world fantasy MMORPG in **Unity 6 (URP)**: a fully 3D low-poly world ren
 - Day/night cycle: bright days, cold moonlit nights, warm firelight
 - Generated test area: village, wheat field, forest, pond, hilltop ruins
 - Water: planar reflections, ripple rings around wading characters, depth-blended shorelines, line-glyph water
-- 18 automated tests (edit mode + play mode)
+- Weather: clear, rain, thunderstorms, snow, and snowstorms with gradual transitions, stronger storm gusts, and lightning flashes
+- Automated tests for rendering, movement, water, day/night, and storm wind (edit mode + play mode)
 
-Not built yet: weather, combat, enemies, multiplayer (see the roadmap in the architecture doc).
+Combat, enemies, and multiplayer are planned in the [architecture roadmap](docs/ARCHITECTURE.md#proposed-next-milestones).
 
 ## Open it
 
@@ -32,11 +33,14 @@ Not built yet: weather, combat, enemies, multiplayer (see the roadmap in the arc
 | F2 / F3 | Glyph density finer / coarser |
 | F4 | Toggle glyph snapping (shows the shimmer it prevents) |
 | F5 | Orthographic / perspective |
+| F6 | Cycle clear → rain → thunderstorm → snow → snowstorm |
 | T | Fast time (×60) |
 | [ / ] | Time −1 h / +1 h |
 | H | Hide the HUD |
 
 **Tuning the look:** select `Environment/Global Volume` (day) or `Night Volume` and edit the **Aelid/ASCII** override. Lighting colors over the day are gradients on `Environment` → `Day Night Cycle`.
+
+**Reviewing weather:** walk to the wheat field southwest of the village and cycle weather with **F6**. Give each preset three seconds to settle. **F1** compares ASCII grass bending with the movement of the 3D wheat, bushes, and tree crowns. On `Environment` → **Weather Controller**, set **Automatic Change Seconds** to zero for manual testing.
 
 ## Repository layout
 

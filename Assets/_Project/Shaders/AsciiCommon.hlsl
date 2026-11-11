@@ -14,6 +14,7 @@
 #define ASCII_COL_SPARKLE     14
 #define ASCII_CLASS_EXEMPT    1
 #define ASCII_CLASS_WATER     3
+#define ASCII_CLASS_GRASS     6
 #define ASCII_CLASS_SKY       15
 
 // All passes use integer pixel addressing (Load), so they never depend on UV
@@ -41,6 +42,7 @@ float4 _AsciiClassParams[16]; // per class: x ascii amount, y atlas row, z edges
 float4 _AsciiClassParams2[16];// per class: x density floor, y sparkle weight
 float4 _AsciiSparkle;         // rgb: sparkle color (HDR), a: density
 float4 _AsciiSparkle2;        // x: self-lit, y: twinkle, z: color jitter, w: density floor scale
+float4 _AelidWeatherWind;     // xy: world XZ wind, z: wind time, w: strength
 
 struct AsciiAttributes
 {

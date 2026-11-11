@@ -241,7 +241,19 @@ Shader "Hidden/Aelid/Ascii"
                 }
 
                 int row = (int)classParams.y;
-                return float4(foreground, row * 16 + glyph);
+                int bend = 0;
+                if (surfaceClass == ASCII_CLASS_GRASS && glyph < ASCII_LEVELS && _AelidWeatherWind.w > 0.05)
+                {
+                    float3 worldWind = float3(_AelidWeatherWind.x, 0.0, _AelidWeatherWind.y);
+                    float windRight = mul((float3x3)UNITY_MATRIX_V, worldWind).x;
+                    float phase = _AelidWeatherWind.z * 3.4 - dot(float2(worldCell), float2(0.15, 0.09));
+                    float gust = 0.55 + 0.45 * sin(phase);
+                    bend = clamp((int)round(3.0 * windRight * gust), -3, 3);
+                }
+
+                // Keep the glyph in the low byte and carry the bend in the
+                // remaining bits. The largest packed value fits exactly in FP16.
+                return float4(foreground, ((bend + 3) << 8) | (row * 16 + glyph));
             }
             ENDHLSL
         }
@@ -283,12 +295,15 @@ Shader "Hidden/Aelid/Ascii"
 
                 float4 glyphData = LOAD_TEXTURE2D(_AsciiCellGlyph, cell);
                 float3 cellAverage = LOAD_TEXTURE2D(_AsciiCellColor, cell).rgb;
-                int code = (int)(glyphData.a + 0.5);
+                int packed = (int)(glyphData.a + 0.5);
+                int bend = (packed >> 8) - 3;
+                int code = packed & 255;
                 if ((int)_AsciiDebug.x == 5)
                 {
                     // Row index counted from the top so the atlas reads like the source table.
                     int screenRow = AsciiRowsGoDown() ? cell.y : int(_AsciiCell.w) - 1 - cell.y;
                     code = (screenRow % 16) * 16 + (cell.x % 16);
+                    bend = 0;
                     glyphData.rgb = 1.0;
                 }
                 int row = code >> 4;
@@ -297,8 +312,14 @@ Shader "Hidden/Aelid/Ascii"
                 int ly = AsciiRowsGoDown() ? local.y : cs - 1 - local.y; // glyph row, counted from the top
                 int gx = (local.x * ASCII_GLYPH) / cs;
                 int gy = (ly * ASCII_GLYPH) / cs;
-                int2 atlasTexel = int2(col * ASCII_GLYPH + gx, ASCII_ATLAS_SIZE - 1 - (row * ASCII_GLYPH + gy));
-                float ink = LOAD_TEXTURE2D(_AsciiGlyphAtlas, atlasTexel).r;
+                // The grass tips shift while their roots stay in the same cell.
+                gx -= (int)round(bend * (1.0 - gy / (ASCII_GLYPH - 1.0)));
+                float ink = 0.0;
+                if (gx >= 0 && gx < ASCII_GLYPH)
+                {
+                    int2 atlasTexel = int2(col * ASCII_GLYPH + gx, ASCII_ATLAS_SIZE - 1 - (row * ASCII_GLYPH + gy));
+                    ink = LOAD_TEXTURE2D(_AsciiGlyphAtlas, atlasTexel).r;
+                }
 
                 float3 background = cellAverage * _AsciiColor.y;
                 float3 ascii = lerp(background, glyphData.rgb, ink);

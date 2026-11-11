@@ -172,6 +172,50 @@ namespace Aelid.Tests
         }
 
         [UnityTest]
+        public IEnumerator Storms_StrengthenWindAndMoveVegetation()
+        {
+            var weather = m_DayNight.GetComponent<WeatherController>();
+            Assert.IsNotNull(weather, "Weather must be wired into the checked-in scene.");
+            weather.automaticChangeSeconds = 0f;
+            weather.transitionSeconds = 0f;
+
+            Assert.IsNotNull(weather.bushes);
+            Assert.IsNotNull(weather.crops);
+            var bush = weather.bushes.GetChild(0);
+            Quaternion calmRotation = bush.localRotation;
+            float calmWind = weather.WindStrength;
+            Assert.AreEqual(WeatherKind.Clear, weather.CurrentWeather);
+
+            Hold(Key.F6);
+            yield return null;
+            Release();
+            yield return null;
+            Assert.AreEqual(WeatherKind.Rain, weather.CurrentWeather);
+
+            foreach (var storm in new[] { WeatherKind.Thunderstorm, WeatherKind.Snowstorm })
+            {
+                weather.SetWeather(storm);
+                yield return null;
+                yield return null;
+
+                Assert.Greater(weather.WindStrength, Mathf.Max(0.5f, calmWind * 5f), storm.ToString());
+                string emitter = storm == WeatherKind.Thunderstorm ? "Rainfall" : "Snowfall";
+                Assert.IsTrue(weather.transform.Find(emitter).GetComponent<ParticleSystem>().isPlaying, emitter);
+
+                float deadline = Time.time + 1.25f;
+                while (Quaternion.Angle(calmRotation, bush.localRotation) < 3f && Time.time < deadline)
+                    yield return null;
+                Assert.GreaterOrEqual(Quaternion.Angle(calmRotation, bush.localRotation), 3f, storm.ToString());
+            }
+
+            weather.SetWeather(WeatherKind.Clear);
+            yield return null;
+            yield return null;
+            Assert.Less(weather.WindStrength, 0.06f);
+            Assert.Less(Quaternion.Angle(calmRotation, bush.localRotation), 1f);
+        }
+
+        [UnityTest]
         public IEnumerator Movement_KeepsFullSpeed_AtVeryHighFrameRates()
         {
             // Regression: CharacterController's default minMoveDistance dropped

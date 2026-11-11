@@ -11,7 +11,7 @@ namespace Aelid.Environment
     ///
     /// URP shades only one main directional light with shadows, so sun and moon
     /// share a light; the hand-over happens at the horizon where both are dark.
-    /// Weather will later layer on top of this controller rather than replace it.
+    /// Weather layers on top of the evaluated lighting and fog.
     /// </summary>
     [ExecuteAlways]
     [AddComponentMenu("Aelid/Environment/Day Night Cycle")]
@@ -62,6 +62,7 @@ namespace Aelid.Environment
 
         Material m_SkyInstance;
         Material m_SkySource;
+        WeatherController m_Weather;
 
         static readonly int k_SkyExposure = Shader.PropertyToID("_Exposure");
         static readonly int k_SkyTint = Shader.PropertyToID("_SkyTint");
@@ -71,6 +72,7 @@ namespace Aelid.Environment
         void OnEnable()
         {
             Active = this;
+            m_Weather = GetComponent<WeatherController>();
             if (sunColor == null || fogDensity == null || fogDensity.length == 0)
                 AssignDefaultCurves();
             Apply();
@@ -174,6 +176,9 @@ namespace Aelid.Environment
 
             if (nightVolume != null)
                 nightVolume.weight = NightFactor;
+
+            if (Application.isPlaying && m_Weather != null && m_Weather.isActiveAndEnabled)
+                m_Weather.ApplyLighting(this);
         }
 
         /// <summary>Unit vector toward a body at <paramref name="angleDegrees"/> along the tilted sky arc (0 = east horizon).</summary>

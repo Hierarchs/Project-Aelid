@@ -1,6 +1,8 @@
 #ifndef AELID_STONE_SURFACE_INCLUDED
 #define AELID_STONE_SURFACE_INCLUDED
 
+float _AelidAsciiCleanBaseline;
+
 float StoneHash(float2 p)
 {
     float3 q = frac(float3(p.x, p.y, p.x) * 0.1031);
@@ -79,7 +81,8 @@ StoneSample EvaluateStone(float3 positionWS, half3 normalWS)
 
     half3 rock = _BaseColor.rgb * lerp(0.76, 1.23, mineral);
     rock = lerp(rock, rock * _MineralTint.rgb, smoothstep(0.45, 0.80, mineral) * 0.5);
-    rock *= 1.0 + (planes.z - 0.5) * _GrainStrength;
+    float grainStrength = _GrainStrength * lerp(1.0, 0.15, _AelidAsciiCleanBaseline);
+    rock *= 1.0 + (planes.z - 0.5) * grainStrength;
     rock *= 1.0 + (sediment - 0.5) * layers * 0.22;
     rock *= 1.0 - joint * _JointStrength * 0.55 - bedding * layers * 0.28;
 
@@ -101,7 +104,8 @@ half3 StoneReliefNormal(float3 positionWS, half3 normalWS, float relief)
     float3 rx = cross(dy, n), ry = cross(n, dx);
     float determinant = dot(dx, rx);
     float inverse = abs(determinant) > 1e-8 ? 1.0 / determinant : 0.0;
-    float3 gradient = (ddx(relief) * rx + ddy(relief) * ry) * inverse * _ReliefStrength;
+    float reliefStrength = _ReliefStrength * (1.0 - _AelidAsciiCleanBaseline);
+    float3 gradient = (ddx(relief) * rx + ddy(relief) * ry) * inverse * reliefStrength;
     gradient *= min(1.0, 0.45 / max(length(gradient), 1e-5));
     return normalize(n - gradient);
 }

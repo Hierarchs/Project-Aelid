@@ -10,6 +10,7 @@ namespace Aelid.Debugging
     /// Development HUD and hotkeys for evaluating the vertical slice.
     ///   F1  toggle ASCII          F2/F3  glyph density -/+
     ///   F4  toggle glyph snapping F5     toggle projection when framing is unlocked
+    ///   F6  compare the clean ASCII baseline
     ///   T   fast time (x60)       [ / ]  time -1h / +1h
     ///   H   show or hide this panel
     /// </summary>
@@ -39,6 +40,7 @@ namespace Aelid.Debugging
             if (kb.f4Key.wasPressedThisFrame && asciiCamera != null) asciiCamera.PixelSnap = !asciiCamera.PixelSnap;
             if (kb.f5Key.wasPressedThisFrame && cameraRig != null && !cameraRig.lockFraming)
                 cameraRig.orthographic = !cameraRig.orthographic;
+            if (kb.f6Key.wasPressedThisFrame) AsciiRuntimeOverrides.CleanBaseline = !AsciiRuntimeOverrides.CleanBaseline;
             if (kb.hKey.wasPressedThisFrame) m_Visible = !m_Visible;
 
             if (dayNight != null)
@@ -52,6 +54,8 @@ namespace Aelid.Debugging
                 if (kb.rightBracketKey.wasPressedThisFrame) dayNight.SetTime(dayNight.timeOfDay + 1f);
             }
         }
+
+        void OnDisable() => AsciiRuntimeOverrides.CleanBaseline = false;
 
         void OnGUI()
         {
@@ -67,10 +71,11 @@ namespace Aelid.Debugging
             string text =
                 $"<b>AELID vertical slice</b>   {1f / Mathf.Max(m_SmoothedDelta, 1e-4f):0} fps\n" +
                 $"Time {h:00}:{m:00}{(m_FastTime ? "  (x60)" : "")}   night {(dayNight != null ? dayNight.NightFactor : 0f):0.00}\n" +
-                $"ASCII {(AsciiRuntimeOverrides.Enabled ? "on" : "off")}  cell {cell}px  snap {(asciiCamera != null && asciiCamera.PixelSnap ? "on" : "off")}  " +
+                $"ASCII {(AsciiRuntimeOverrides.Enabled ? "on" : "off")}  {(AsciiRuntimeOverrides.CleanBaseline ? "clean" : "current")}  " +
+                $"cell {cell}px  snap {(asciiCamera != null && asciiCamera.PixelSnap ? "on" : "off")}  " +
                 $"{(cameraRig != null && cameraRig.orthographic ? "ortho" : "persp")}\n" +
                 $"Speed {(player != null ? player.PlanarSpeed : 0f):0.0} m/s\n" +
-                "<color=#aaaaaa>WASD move  Shift run\nF1 ascii  F2/F3 density  F4 snap\nT fast time  [ ] hour  H toggle HUD</color>";
+                "<color=#aaaaaa>WASD move  Shift run\nF1 ascii  F2/F3 density  F4 snap  F6 clean baseline\nT fast time  [ ] hour  H toggle HUD</color>";
 
             var rect = new Rect(12, 12, 420, 140);
             GUI.color = new Color(0f, 0f, 0f, 0.55f);

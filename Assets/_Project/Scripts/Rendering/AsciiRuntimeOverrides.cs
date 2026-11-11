@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Aelid.Rendering
 {
     /// <summary>
@@ -6,6 +8,8 @@ namespace Aelid.Rendering
     /// </summary>
     public static class AsciiRuntimeOverrides
     {
+        static readonly int k_CleanBaseline = Shader.PropertyToID("_AelidAsciiCleanBaseline");
+
         /// <summary>When false the ASCII pass is skipped entirely (raw 3D view).</summary>
         public static bool Enabled = true;
 
@@ -14,6 +18,13 @@ namespace Aelid.Rendering
 
         /// <summary>Diagnostic output of the composite pass.</summary>
         public static AsciiDebugView DebugView = AsciiDebugView.None;
+
+        /// <summary>Suppresses fine glyph and material detail for visual comparisons.</summary>
+        public static bool CleanBaseline
+        {
+            get => Shader.GetGlobalFloat(k_CleanBaseline) > 0.5f;
+            set => Shader.SetGlobalFloat(k_CleanBaseline, value ? 1f : 0f);
+        }
     }
 
     public enum AsciiDebugView

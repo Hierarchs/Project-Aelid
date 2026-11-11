@@ -451,6 +451,7 @@ namespace Aelid.Rendering
             void FillUniforms(Camera camera, int width, int height, int cellSize, int cellsX, int cellsY)
             {
                 AsciiSettings s = m_Settings;
+                bool clean = AsciiRuntimeOverrides.CleanBaseline;
                 Vector2Int offset = Vector2Int.zero;
                 Vector2Int origin = Vector2Int.zero;
                 if (camera != null && camera.cameraType == CameraType.Game && camera.TryGetComponent(out AsciiCamera asciiCamera))
@@ -463,10 +464,11 @@ namespace Aelid.Rendering
                 u.cell = new Vector4(cellSize, 1f / cellSize, cellsX, cellsY);
                 u.source = new Vector4(width, height, 1f / width, 1f / height);
                 u.offset = new Vector4(offset.x, offset.y, origin.x, origin.y);
-                u.tone = new Vector4(s.exposure.value, s.contrast.value, s.gamma.value, s.dither.value);
+                u.tone = new Vector4(s.exposure.value, s.contrast.value, s.gamma.value, clean ? 0f : s.dither.value);
                 u.color = new Vector4(s.glyphBrightness.value, s.backgroundFill.value, s.saturation.value, s.colorNormalize.value);
                 u.backgroundColor = s.backgroundColor.value;
-                u.edge = new Vector4(s.edgeThreshold.value, s.depthEdgeSensitivity.value, s.normalEdgeSensitivity.value, s.edges.value ? 1f : 0f);
+                u.edge = new Vector4(s.edgeThreshold.value, s.depthEdgeSensitivity.value,
+                    clean ? 0f : s.normalEdgeSensitivity.value, s.edges.value ? 1f : 0f);
                 u.misc = new Vector4(Time.time, s.waterRippleSpeed.value, s.exemptOutline.value, s.intensity.value);
                 u.outlineColor = s.exemptOutlineColor.value;
                 u.debug = new Vector4((int)AsciiRuntimeOverrides.DebugView, 0f, 0f, 0f);
@@ -498,8 +500,9 @@ namespace Aelid.Rendering
                 u.classParams2[AsciiSurfaceLayers.SkyClass] = Vector4.zero;
 
                 Color sparkleColor = s.sparkleColor.value;
-                u.sparkle = new Vector4(sparkleColor.r, sparkleColor.g, sparkleColor.b, s.sparkleDensity.value);
-                u.sparkle2 = new Vector4(s.sparkleSelfLit.value, s.sparkleTwinkle.value, s.colorJitter.value, s.densityFloor.value);
+                u.sparkle = new Vector4(sparkleColor.r, sparkleColor.g, sparkleColor.b, clean ? 0f : s.sparkleDensity.value);
+                u.sparkle2 = new Vector4(s.sparkleSelfLit.value, s.sparkleTwinkle.value,
+                    clean ? 0f : s.colorJitter.value, s.densityFloor.value);
             }
         }
     }

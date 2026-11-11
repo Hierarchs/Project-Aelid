@@ -29,6 +29,7 @@ Not built yet: weather, combat, enemies, multiplayer (see the roadmap in the arc
 | F1 | Toggle ASCII (compare with the raw 3D view) |
 | F2 / F3 | Glyph density finer / coarser |
 | F4 | Toggle glyph snapping (shows the shimmer it prevents) |
+| F6 | Switch between the current ASCII look and the clean baseline |
 | T | Fast time (×60) |
 | [ / ] | Time −1 h / +1 h |
 | H | Toggle the developer HUD |
@@ -57,9 +58,14 @@ These commands need the project to be closed in the Editor. Unity allows one ins
 UNITY="/c/Program Files/Unity/Hub/Editor/6000.6.8f1/Editor/Unity.exe"
 # Regenerate the scene and write review screenshots + stability report to Captures/
 "$UNITY" -batchmode -projectPath . -executeMethod Aelid.EditorTools.AsciiCaptureTool.BuildAndCaptureFromCommandLine -logFile build.log
+# Compare both ASCII looks in the saved ruins scene without rebuilding it.
+"$UNITY" -batchmode -projectPath . -executeMethod Aelid.EditorTools.AsciiCaptureTool.CaptureBaselineFromCommandLine -logFile baseline.log
 # Tests
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults editmode.xml
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults playmode.xml
 ```
 
-Inside the Editor, the same tools are under the **Aelid** menu.
+The baseline capture writes matched 1920 × 1080 day and night PNGs and a
+24-frame daylight pan to `Captures/AsciiBaseline/`. Use F6 in Play Mode to
+compare both looks interactively. The general review capture is also available
+under the Editor's **Aelid** menu.

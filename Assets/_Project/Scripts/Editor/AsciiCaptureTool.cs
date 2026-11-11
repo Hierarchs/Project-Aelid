@@ -72,6 +72,108 @@ namespace Aelid.EditorTools
             }
         }
 
+        public static void CaptureBaselineFromCommandLine()
+        {
+            try
+            {
+                CaptureBaseline();
+                EditorApplication.Exit(0);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                EditorApplication.Exit(1);
+            }
+        }
+
+        static void CaptureBaseline()
+        {
+            const string folder = "AsciiBaseline";
+            string panFolder = Path.Combine(folder, "pan");
+            Directory.CreateDirectory(Path.Combine(OutputDirectory, panFolder));
+            EditorSceneManager.OpenScene(VerticalSliceBuilder.ScenePath, OpenSceneMode.Single);
+
+            var rig = UnityEngine.Object.FindAnyObjectByType<IsometricCameraRig>();
+            var asciiCamera = UnityEngine.Object.FindAnyObjectByType<AsciiCamera>();
+            var dayNight = UnityEngine.Object.FindAnyObjectByType<DayNightCycle>();
+            var player = UnityEngine.Object.FindAnyObjectByType<PlayerMotor>();
+            if (rig == null || rig.cam == null || asciiCamera == null || dayNight == null || player == null)
+                throw new InvalidOperationException("Vertical slice scene is missing its camera rig, ASCII camera, day/night cycle or player.");
+
+            Camera cam = rig.cam;
+            var rt = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+                { name = "AsciiBaselineCapture" };
+            bool previousAsync = ShaderUtil.allowAsyncCompilation;
+            bool previousEnabled = AsciiRuntimeOverrides.Enabled;
+            bool previousClean = AsciiRuntimeOverrides.CleanBaseline;
+            var previousDebug = AsciiRuntimeOverrides.DebugView;
+            int previousCellOffset = AsciiRuntimeOverrides.CellSizeOffset;
+            bool previousSnap = asciiCamera.PixelSnap;
+            var previousTarget = cam.targetTexture;
+            var previousWaterTime = WaterRipples.TimeOverride;
+
+            try
+            {
+                ShaderUtil.allowAsyncCompilation = false;
+                AsciiRuntimeOverrides.Enabled = true;
+                AsciiRuntimeOverrides.DebugView = AsciiDebugView.None;
+                AsciiRuntimeOverrides.CellSizeOffset = 0;
+                asciiCamera.PixelSnap = true;
+                WaterRipples.TimeOverride = 37f;
+                if (!rt.Create())
+                    throw new InvalidOperationException("Could not create the baseline capture render target.");
+                cam.targetTexture = rt;
+
+                var ruins = new Shot { player = new Vector2(-30f, 25f), facing = 300f, zoom = rig.viewHalfHeight, hour = 1f };
+                Pose(player, rig, asciiCamera, dayNight, ruins);
+                asciiCamera.ApplySnap();
+                RenderToTextureAndDiscard(cam, rt);
+                SaveBaselinePair(cam, rt, folder, "night");
+
+                ruins.hour = 14f;
+                Pose(player, rig, asciiCamera, dayNight, ruins);
+                Vector3 focus = player.transform.position + rig.targetOffset;
+                asciiCamera.ApplySnap();
+                RenderToTextureAndDiscard(cam, rt);
+                SaveBaselinePair(cam, rt, folder, "day");
+
+                // One second at 24 fps. Translate the camera while keeping its aim and the player fixed.
+                const int frames = 24;
+                const int pixelsPerFrame = 6;
+                float unitsPerPixel = 2f * cam.orthographicSize / Height;
+                Vector3 step = rig.transform.right * (pixelsPerFrame * unitsPerPixel);
+                for (int frame = 0; frame < frames; frame++)
+                {
+                    rig.SetFocus(focus + step * frame);
+                    asciiCamera.ApplySnap();
+                    SaveBaselinePair(cam, rt, panFolder, $"{frame:D3}");
+                }
+            }
+            finally
+            {
+                cam.targetTexture = previousTarget;
+                asciiCamera.PixelSnap = previousSnap;
+                AsciiRuntimeOverrides.Enabled = previousEnabled;
+                AsciiRuntimeOverrides.CleanBaseline = previousClean;
+                AsciiRuntimeOverrides.DebugView = previousDebug;
+                AsciiRuntimeOverrides.CellSizeOffset = previousCellOffset;
+                ShaderUtil.allowAsyncCompilation = previousAsync;
+                WaterRipples.TimeOverride = previousWaterTime;
+                WaterRipples.Clear();
+                UnityEngine.Object.DestroyImmediate(rt);
+            }
+
+            Debug.Log($"[Aelid] Baseline comparisons written to {Path.Combine(OutputDirectory, folder)}");
+        }
+
+        static void SaveBaselinePair(Camera cam, RenderTexture rt, string folder, string shot)
+        {
+            AsciiRuntimeOverrides.CleanBaseline = false;
+            SavePng(RenderToTexture(cam, rt), Path.Combine(folder, $"{shot}_current.png"));
+            AsciiRuntimeOverrides.CleanBaseline = true;
+            SavePng(RenderToTexture(cam, rt), Path.Combine(folder, $"{shot}_clean.png"));
+        }
+
         /// <summary>Renders the village shot in every AsciiDebugView, with and without post-processing.</summary>
         public static void CaptureDebugViewsFromCommandLine()
         {

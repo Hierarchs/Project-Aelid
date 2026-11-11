@@ -35,6 +35,7 @@ namespace Aelid.EditorTools
         static readonly Vector2 k_Village = new(0f, 0f);
         static readonly Vector2 k_Pond = new(26f, -16f);
         static readonly Vector2 k_Ruins = new(-34f, 30f);
+        static readonly Vector2 k_Camp = new(12f, 17f);
         static readonly Rect k_Field = new(-27f, -19f, 12f, 12f);
 
         static readonly Vector2[][] k_Paths =
@@ -82,6 +83,7 @@ namespace Aelid.EditorTools
             BuildVillage(world);
             BuildField(world);
             BuildRuins(world);
+            BuildCampfire(world, Ground(k_Camp.x, k_Camp.y)); // wilderness camp in a meadow
             BuildVegetationAndRocks(world);
             BuildBoundary(world);
 
@@ -196,8 +198,8 @@ namespace Aelid.EditorTools
                     else { AddTri(i00, i01, i10); AddTri(i10, i01, i11); }
                 }
 
-            AddTerrainPart(root, "Grass A", buckets["GrassA"], Mat("Terrain_GrassA", new Color(0.30f, 0.52f, 0.19f)), AsciiSurfaceClass.Grass);
-            AddTerrainPart(root, "Grass B", buckets["GrassB"], Mat("Terrain_GrassB", new Color(0.40f, 0.60f, 0.21f)), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Grass A", buckets["GrassA"], Mat("Terrain_GrassA", new Color(0.20f, 0.46f, 0.17f)), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Grass B", buckets["GrassB"], Mat("Terrain_GrassB", new Color(0.26f, 0.53f, 0.18f)), AsciiSurfaceClass.Grass);
             AddTerrainPart(root, "Dirt", buckets["Dirt"], Mat("Terrain_Dirt", new Color(0.50f, 0.38f, 0.24f)), AsciiSurfaceClass.Default);
             AddTerrainPart(root, "Rock", buckets["Rock"], Mat("Terrain_Rock", new Color(0.42f, 0.40f, 0.38f)), AsciiSurfaceClass.Stone);
             AddTerrainPart(root, "Sand", buckets["Sand"], Mat("Terrain_Sand", new Color(0.70f, 0.63f, 0.44f)), AsciiSurfaceClass.Default);
@@ -362,10 +364,10 @@ namespace Aelid.EditorTools
             lightGo.transform.localPosition = new Vector3(0, 1.1f, 0);
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
-            light.color = new Color(1f, 0.58f, 0.25f);
-            light.intensity = 6f;
-            light.range = 12f;
-            lightGo.AddComponent<FlickerLight>().baseIntensity = 6f;
+            light.color = new Color(1f, 0.44f, 0.12f); // saturated so lit grass turns ochre-orange
+            light.intensity = 24f;
+            light.range = 18f;
+            lightGo.AddComponent<FlickerLight>().baseIntensity = 24f;
         }
 
         static void BuildWell(Transform parent, Vector3 pos)
@@ -409,12 +411,12 @@ namespace Aelid.EditorTools
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
             light.color = new Color(1f, 0.72f, 0.42f);
-            light.intensity = 3.5f;
-            light.range = 9f;
+            light.intensity = 8f;
+            light.range = 12f;
 
             var night = root.gameObject.AddComponent<NightLight>();
             night.lights = new[] { light };
-            night.intensity = 3.5f;
+            night.intensity = 8f;
             night.emissiveRenderers = new Renderer[] { headGo.GetComponent<MeshRenderer>() };
             night.emission = new Color(2.6f, 1.35f, 0.35f);
             var col = root.gameObject.AddComponent<CapsuleCollider>();
@@ -524,10 +526,10 @@ namespace Aelid.EditorTools
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
             light.color = new Color(0.35f, 0.55f, 1f);
-            light.intensity = 5f;
-            light.range = 14f;
+            light.intensity = 12f;
+            light.range = 19f;
             var flicker = lightGo.AddComponent<FlickerLight>();
-            flicker.baseIntensity = 5f;
+            flicker.baseIntensity = 12f;
             flicker.speed = 1.5f;
             flicker.intensityVariation = 0.4f;
             var night = root.gameObject.AddComponent<NightLight>();
@@ -664,6 +666,7 @@ namespace Aelid.EditorTools
             if (Vector2.Distance(p, k_Village) < 19f) return false;
             if (Vector2.Distance(p, k_Pond) < 14f) return false;
             if (Vector2.Distance(p, k_Ruins) < 10f) return false;
+            if (Vector2.Distance(p, k_Camp) < 7f) return false;
             if (DistanceToRect(p, k_Field) < 2.5f) return false;
             if (DistanceToPaths(p) < pathClearance) return false;
             return true;
@@ -849,7 +852,10 @@ namespace Aelid.EditorTools
         static VolumeProfile BuildBaseProfile()
         {
             var profile = NewProfile("VolumeProfile_Base");
-            var ascii = AddComponent<AsciiSettings>(profile);
+            // Override every ASCII parameter so the look never depends on the
+            // project's default volume profile. Values are the code defaults:
+            // black background, glyph colour carries the light, dense textures.
+            var ascii = AddComponent<AsciiSettings>(profile, overrideAll: true);
             ascii.intensity.Override(1f);
             ascii.cellSize.Override(8);
 
@@ -878,9 +884,14 @@ namespace Aelid.EditorTools
             // stays light so firelight keeps its warmth against the blue.
             var ascii = AddComponent<AsciiSettings>(profile);
             ascii.exposure.Override(3.2f);
-            ascii.backgroundFill.Override(0.12f);
-            ascii.glyphBrightness.Override(2.4f);
-            ascii.colorNormalize.Override(0.55f);
+            ascii.backgroundFill.Override(0f);
+            ascii.glyphBrightness.Override(3.0f);
+            ascii.colorNormalize.Override(0.12f);
+            // Fireflies: sparse, self-lit, slowly pulsing; HDR so bloom makes them glow.
+            ascii.sparkleColor.Override(new Color(1.7f, 2.5f, 0.7f, 1f));
+            ascii.sparkleDensity.Override(0.012f);
+            ascii.sparkleSelfLit.Override(1f);
+            ascii.sparkleTwinkle.Override(1f);
 
             var color = AddComponent<ColorAdjustments>(profile);
             color.saturation.Override(-8f);
@@ -909,9 +920,9 @@ namespace Aelid.EditorTools
             return profile;
         }
 
-        static T AddComponent<T>(VolumeProfile profile) where T : VolumeComponent
+        static T AddComponent<T>(VolumeProfile profile, bool overrideAll = false) where T : VolumeComponent
         {
-            var component = profile.Add<T>(false);
+            var component = profile.Add<T>(overrideAll);
             component.name = typeof(T).Name;
             component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
             AssetDatabase.AddObjectToAsset(component, profile);

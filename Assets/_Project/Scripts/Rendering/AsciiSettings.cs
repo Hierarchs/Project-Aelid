@@ -36,18 +36,38 @@ namespace Aelid.Rendering
         [Tooltip("World-anchored dithering between adjacent glyph levels. Breaks up flat areas without flicker.")]
         public ClampedFloatParameter dither = new(0.7f, 0f, 2f);
 
+        [Tooltip("Scales each surface's minimum glyph density. Above 0, shadows stay textured with dim glyphs " +
+                 "instead of going empty, so light reads through glyph color rather than glyph count.")]
+        public ClampedFloatParameter densityFloor = new(1f, 0f, 1.5f);
+
         [Header("Color")]
         [Tooltip("Brightness multiplier for glyph strokes (compensates for glyph coverage).")]
-        public ClampedFloatParameter glyphBrightness = new(1.5f, 0.25f, 6f);
+        public ClampedFloatParameter glyphBrightness = new(1.9f, 0.25f, 6f);
 
-        [Tooltip("How much of the cell color fills the space behind the glyph.")]
-        public ClampedFloatParameter backgroundFill = new(0.22f, 0f, 1f);
+        [Tooltip("How much of the cell color fills the space behind the glyph. 0 = black terminal background.")]
+        public ClampedFloatParameter backgroundFill = new(0.05f, 0f, 1f);
 
         [Tooltip("Saturation of glyph colors.")]
-        public ClampedFloatParameter saturation = new(1.25f, 0f, 2.5f);
+        public ClampedFloatParameter saturation = new(1.1f, 0f, 2.5f);
 
         [Tooltip("Pushes dark glyph colors toward a common brightness so hue stays readable in shadow.")]
-        public ClampedFloatParameter colorNormalize = new(0.3f, 0f, 1f);
+        public ClampedFloatParameter colorNormalize = new(0f, 0f, 1f);
+
+        [Tooltip("World-anchored per-glyph brightness variation, so dense fields read as texture.")]
+        public ClampedFloatParameter colorJitter = new(0.28f, 0f, 0.6f);
+
+        [Header("Sparkles (grass accents)")]
+        [Tooltip("Fraction of grass cells that show a sparkle: flowers by day, fireflies by night.")]
+        public ClampedFloatParameter sparkleDensity = new(0.025f, 0f, 0.2f);
+
+        [Tooltip("Sparkle color. HDR values glow through bloom.")]
+        public ColorParameter sparkleColor = new(new Color(1f, 0.96f, 0.86f, 1f), true, false, true);
+
+        [Tooltip("0 = lit by the scene like a flower, 1 = emits its own light like a firefly.")]
+        public ClampedFloatParameter sparkleSelfLit = new(0f, 0f, 1f);
+
+        [Tooltip("Slow pulsing of sparkles (intended motion, e.g. fireflies).")]
+        public ClampedFloatParameter sparkleTwinkle = new(0f, 0f, 1f);
 
         [Header("Edges")]
         [Tooltip("Replace glyphs on silhouettes and creases with line glyphs ( | - / \\ ).")]

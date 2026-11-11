@@ -178,6 +178,7 @@ Shader "Hidden/Aelid/Ascii"
                 float4 g0 = LOAD_TEXTURE2D(_AsciiCellGeometry, cell);
                 int surfaceClass = clamp((int)(c0.a + 0.5), 0, 15);
                 float4 classParams = _AsciiClassParams[surfaceClass];
+                float4 classParams2 = _AsciiClassParams2[surfaceClass];
 
                 // --- Density from luminance (exposure only affects glyph choice) ---
                 float lumHdr = AsciiLuminance(c0.rgb * _AsciiTone.x);
@@ -185,33 +186,59 @@ Shader "Hidden/Aelid/Ascii"
                 lum = saturate((lum - 0.5) * _AsciiTone.y + 0.5);
                 lum = pow(max(lum, 1e-5), _AsciiTone.z);
 
+                // Density floor: textured surfaces keep dim glyphs in shadow, so
+                // lighting reads through glyph colour rather than empty space.
+                // Cells with essentially no light still fall to black.
+                float densityFloor = saturate(classParams2.x * _AsciiSparkle2.w);
+                float hasLight = saturate(lumHdr * 40.0);
+                float density = lerp(densityFloor * hasLight, 1.0, lum);
+
                 int2 worldCell = AsciiWorldCell(cell);
                 float noise = AsciiHash(worldCell) - 0.5;
-                lum += noise * _AsciiTone.w * classParams.w / ASCII_LEVELS;
+                density += noise * _AsciiTone.w * classParams.w / ASCII_LEVELS;
 
                 if (surfaceClass == ASCII_CLASS_WATER)
                 {
                     float t = _AsciiMisc.x * _AsciiMisc.y;
-                    lum += 0.07 * sin(t + worldCell.x * 0.55 + worldCell.y * 1.3)
-                         + 0.04 * sin(t * 1.7 - worldCell.x * 0.31 + worldCell.y * 0.77);
+                    density += 0.07 * sin(t + worldCell.x * 0.55 + worldCell.y * 1.3)
+                             + 0.04 * sin(t * 1.7 - worldCell.x * 0.31 + worldCell.y * 0.77);
                 }
 
-                int glyph = clamp((int)(saturate(lum) * ASCII_LEVELS), 0, ASCII_LEVELS - 1);
+                int glyph = clamp((int)(saturate(density) * ASCII_LEVELS), 0, ASCII_LEVELS - 1);
+
+                // --- Sparkles: sparse world-anchored accents (flowers / fireflies) ---
+                bool sparkle = classParams2.y > 0.0 && AsciiHash2(worldCell) < _AsciiSparkle.a * classParams2.y;
+                if (sparkle)
+                    glyph = ASCII_COL_SPARKLE;
 
                 // --- Line glyphs on silhouettes and creases ---
                 if (_AsciiEdge.w > 0.5 && classParams.z > 0.5 && surfaceClass != ASCII_CLASS_SKY)
                 {
                     int edge = DetectEdge(cell, cells, g0);
                     if (edge >= 0)
+                    {
                         glyph = edge;
+                        sparkle = false;
+                    }
                 }
 
-                // --- Glyph color ---
+                // --- Glyph color: the lit surface colour, so light pools read directly ---
                 float3 color = max(c0.rgb, 0.0);
                 float l = max(AsciiLuminance(color), 1e-4);
                 color = max(lerp(l.xxx, color, _AsciiColor.z), 0.0);
                 float normalizeBoost = lerp(1.0, clamp(0.35 / l, 0.25, 6.0), _AsciiColor.w);
-                float3 foreground = color * _AsciiColor.x * normalizeBoost;
+                float jitter = 1.0 + (AsciiHash(worldCell + int2(17, 59)) - 0.5) * 2.0 * _AsciiSparkle2.z;
+                float3 foreground = color * _AsciiColor.x * normalizeBoost * jitter;
+
+                if (sparkle)
+                {
+                    float phase = AsciiHash(worldCell + int2(91, 13)) * 6.2831853;
+                    float pulse = 0.35 + 0.65 * saturate(0.5 + 0.5 * sin(_AsciiMisc.x * 2.1 + phase));
+                    float twinkle = lerp(1.0, pulse, _AsciiSparkle2.y);
+                    float sceneLight = saturate(lumHdr * 1.5);           // flowers only show where lit
+                    float emission = lerp(sceneLight, 1.0, _AsciiSparkle2.x); // fireflies glow on their own
+                    foreground = _AsciiSparkle.rgb * emission * twinkle;
+                }
 
                 int row = (int)classParams.y;
                 return float4(foreground, row * 16 + glyph);

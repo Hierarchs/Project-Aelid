@@ -1,6 +1,147 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-4850911860356832247
+--- !u!114 &-7190029913686842323
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b2db86121404754db890f4c8dfe81b2, type: 3}
+  m_Name: Bloom
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Bloom
+  active: 1
+  skipIterations:
+    m_OverrideState: 0
+    m_Value: 1
+  threshold:
+    m_OverrideState: 1
+    m_Value: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0.45
+  scatter:
+    m_OverrideState: 1
+    m_Value: 0.65
+  clamp:
+    m_OverrideState: 0
+    m_Value: 65472
+  tint:
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  highQualityFiltering:
+    m_OverrideState: 0
+    m_Value: 0
+  filter:
+    m_OverrideState: 0
+    m_Value: 0
+  downscale:
+    m_OverrideState: 0
+    m_Value: 0
+  maxIterations:
+    m_OverrideState: 0
+    m_Value: 6
+  dirtTexture:
+    m_OverrideState: 0
+    m_Value: {fileID: 0}
+    dimension: 1
+  dirtIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+--- !u!114 &-7144302879134942114
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39a78720a357d914da7ff3bebd9c87e6, type: 3}
+  m_Name: AsciiSettings
+  m_EditorClassIdentifier: Aelid.Rendering::Aelid.Rendering.AsciiSettings
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  cellSize:
+    m_OverrideState: 1
+    m_Value: 8
+  scaleWithResolution:
+    m_OverrideState: 1
+    m_Value: 1
+  exposure:
+    m_OverrideState: 1
+    m_Value: 1.6
+  contrast:
+    m_OverrideState: 1
+    m_Value: 1.15
+  gamma:
+    m_OverrideState: 1
+    m_Value: 0.85
+  dither:
+    m_OverrideState: 1
+    m_Value: 0.7
+  densityFloor:
+    m_OverrideState: 1
+    m_Value: 1
+  glyphBrightness:
+    m_OverrideState: 1
+    m_Value: 1.9
+  backgroundFill:
+    m_OverrideState: 1
+    m_Value: 0.05
+  saturation:
+    m_OverrideState: 1
+    m_Value: 1.1
+  colorNormalize:
+    m_OverrideState: 1
+    m_Value: 0
+  colorJitter:
+    m_OverrideState: 1
+    m_Value: 0.28
+  sparkleDensity:
+    m_OverrideState: 1
+    m_Value: 0.025
+  sparkleColor:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 0.96, b: 0.86, a: 1}
+  sparkleSelfLit:
+    m_OverrideState: 1
+    m_Value: 0
+  sparkleTwinkle:
+    m_OverrideState: 1
+    m_Value: 0
+  edges:
+    m_OverrideState: 1
+    m_Value: 1
+  edgeThreshold:
+    m_OverrideState: 1
+    m_Value: 0.35
+  depthEdgeSensitivity:
+    m_OverrideState: 1
+    m_Value: 6
+  normalEdgeSensitivity:
+    m_OverrideState: 1
+    m_Value: 0.9
+  exemptAscii:
+    m_OverrideState: 1
+    m_Value: 0
+  emissiveAscii:
+    m_OverrideState: 1
+    m_Value: 0.45
+  exemptOutline:
+    m_OverrideState: 1
+    m_Value: 0.85
+  exemptOutlineColor:
+    m_OverrideState: 1
+    m_Value: {r: 0.02, g: 0.02, b: 0.03, a: 1}
+  waterRippleSpeed:
+    m_OverrideState: 1
+    m_Value: 1.2
+--- !u!114 &-2400505108366564022
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -28,7 +169,7 @@ MonoBehaviour:
   saturation:
     m_OverrideState: 1
     m_Value: 10
---- !u!114 &-2740092327032710410
+--- !u!114 &-23181954216838585
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -81,135 +222,12 @@ MonoBehaviour:
   m_Name: VolumeProfile_Base
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 1197992445854026783}
-  - {fileID: -2740092327032710410}
-  - {fileID: 1405764548829937323}
-  - {fileID: -4850911860356832247}
-  - {fileID: 6606738254231979493}
---- !u!114 &1197992445854026783
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39a78720a357d914da7ff3bebd9c87e6, type: 3}
-  m_Name: AsciiSettings
-  m_EditorClassIdentifier: Aelid.Rendering::Aelid.Rendering.AsciiSettings
-  active: 1
-  intensity:
-    m_OverrideState: 1
-    m_Value: 1
-  cellSize:
-    m_OverrideState: 1
-    m_Value: 8
-  scaleWithResolution:
-    m_OverrideState: 0
-    m_Value: 1
-  exposure:
-    m_OverrideState: 0
-    m_Value: 1.6
-  contrast:
-    m_OverrideState: 0
-    m_Value: 1.15
-  gamma:
-    m_OverrideState: 0
-    m_Value: 0.85
-  dither:
-    m_OverrideState: 0
-    m_Value: 0.7
-  glyphBrightness:
-    m_OverrideState: 0
-    m_Value: 1.5
-  backgroundFill:
-    m_OverrideState: 0
-    m_Value: 0.22
-  saturation:
-    m_OverrideState: 0
-    m_Value: 1.25
-  colorNormalize:
-    m_OverrideState: 0
-    m_Value: 0.3
-  edges:
-    m_OverrideState: 0
-    m_Value: 1
-  edgeThreshold:
-    m_OverrideState: 0
-    m_Value: 0.35
-  depthEdgeSensitivity:
-    m_OverrideState: 0
-    m_Value: 6
-  normalEdgeSensitivity:
-    m_OverrideState: 0
-    m_Value: 0.9
-  exemptAscii:
-    m_OverrideState: 0
-    m_Value: 0
-  emissiveAscii:
-    m_OverrideState: 0
-    m_Value: 0.45
-  exemptOutline:
-    m_OverrideState: 0
-    m_Value: 0.85
-  exemptOutlineColor:
-    m_OverrideState: 0
-    m_Value: {r: 0.02, g: 0.02, b: 0.03, a: 1}
-  waterRippleSpeed:
-    m_OverrideState: 0
-    m_Value: 1.2
---- !u!114 &1405764548829937323
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b2db86121404754db890f4c8dfe81b2, type: 3}
-  m_Name: Bloom
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Bloom
-  active: 1
-  skipIterations:
-    m_OverrideState: 0
-    m_Value: 1
-  threshold:
-    m_OverrideState: 1
-    m_Value: 1
-  intensity:
-    m_OverrideState: 1
-    m_Value: 0.45
-  scatter:
-    m_OverrideState: 1
-    m_Value: 0.65
-  clamp:
-    m_OverrideState: 0
-    m_Value: 65472
-  tint:
-    m_OverrideState: 0
-    m_Value: {r: 1, g: 1, b: 1, a: 1}
-  highQualityFiltering:
-    m_OverrideState: 0
-    m_Value: 0
-  filter:
-    m_OverrideState: 0
-    m_Value: 0
-  downscale:
-    m_OverrideState: 0
-    m_Value: 0
-  maxIterations:
-    m_OverrideState: 0
-    m_Value: 6
-  dirtTexture:
-    m_OverrideState: 0
-    m_Value: {fileID: 0}
-    dimension: 1
-  dirtIntensity:
-    m_OverrideState: 0
-    m_Value: 0
---- !u!114 &6606738254231979493
+  - {fileID: -7144302879134942114}
+  - {fileID: -23181954216838585}
+  - {fileID: -7190029913686842323}
+  - {fileID: -2400505108366564022}
+  - {fileID: 2019801046561460841}
+--- !u!114 &2019801046561460841
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

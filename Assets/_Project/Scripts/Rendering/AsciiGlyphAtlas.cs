@@ -11,7 +11,8 @@ namespace Aelid.Rendering
     /// Layout: 16 columns x 16 rows of 8x8 glyphs (128x128, R8).
     ///   Row    = glyph vocabulary, indexed by AsciiSurfaceClass (row 15 = sky).
     ///   Col 0-9  = density ramp, sorted by ink coverage (dark -> bright).
-    ///   Col 10-14 = line glyphs | - / \ _ used on detected edges.
+    ///   Col 10-13 = line glyphs | - / \ used on detected edges.
+    ///   Col 14 = sparkle (flowers by day, fireflies by night).
     ///   Col 15 = solid block.
     /// </summary>
     public static class AsciiGlyphAtlas
@@ -26,20 +27,34 @@ namespace Aelid.Rendering
         public const int ColEdgeHorizontal = 11;
         public const int ColEdgeSlash = 12;
         public const int ColEdgeBackslash = 13;
-        public const int ColEdgeUnderscore = 14;
+        public const int ColSparkle = 14;
         public const int ColSolid = 15;
 
+        // Thin grass blades have no keyboard character; they live in the
+        // private-use range so vocabulary strings can still list them.
+        const char Sprout = '';
+        const char Blade = '';
+        const char TallBlade = '';
+        const char TwinBlades = '';
+        const char TallTwin = '';
+        const char Tuft = '';
+        const char ThickTuft = '';
+        const char Sward = '';
+
+        static readonly string k_GrassBlades = new(new[] { ' ', '.', Sprout, Blade, TallBlade, TwinBlades, TallTwin, Tuft, ThickTuft, Sward });
+
         // Glyph vocabularies (any order; sorted by coverage at build time).
+        // Dense surfaces use letters, as in classic ASCII art: walls read as text.
         static readonly Dictionary<int, string> k_Vocabularies = new()
         {
             { (int)AsciiSurfaceClass.Default,  " .:-=+*#%@" },
             { (int)AsciiSurfaceClass.Exempt,   " .:-=+*#%@" },
-            { (int)AsciiSurfaceClass.Foliage,  " .,:;*&%♣♠" },
+            { (int)AsciiSurfaceClass.Foliage,  " .,;o*&8♣♠" },
             { (int)AsciiSurfaceClass.Water,    " .-~=░≈≋▒▓" },
-            { (int)AsciiSurfaceClass.Stone,    " .:-=+#H▒▓" },
+            { (int)AsciiSurfaceClass.Stone,    " .:oO8SQMB" },
             { (int)AsciiSurfaceClass.Emissive, " .'^*+A#%@" },
-            { (int)AsciiSurfaceClass.Grass,    " .,'`\";vwW" },
-            { (int)AsciiSurfaceClass.Wood,     " .:-=+x#H@" },
+            { (int)AsciiSurfaceClass.Grass,    k_GrassBlades },
+            { (int)AsciiSurfaceClass.Wood,     " .-=+xNH#@" },
             { AsciiSurfaceLayers.SkyClass,     " .`'-~+*=%" },
         };
 
@@ -77,6 +92,26 @@ namespace Aelid.Rendering
             { 'v', new[] { "........", "........", "XX..XX..", "XX..XX..", "XX..XX..", ".XXXX...", "..XX....", "........" } },
             { 'w', new[] { "........", "........", "XX...XX.", "XX.X.XX.", "XXXXXXX.", "XXX.XXX.", "XX...XX.", "........" } },
             { 'W', new[] { "XX...XX.", "XX...XX.", "XX...XX.", "XX.X.XX.", "XXXXXXX.", "XXX.XXX.", "XX...XX.", "........" } },
+
+            // Thin-stroke letters for dense surfaces (stone, timber, canopies).
+            { 'o', new[] { "........", "........", "..XXX...", ".X...X..", ".X...X..", ".X...X..", "..XXX...", "........" } },
+            { 'O', new[] { "..XXX...", ".X...X..", "X.....X.", "X.....X.", "X.....X.", ".X...X..", "..XXX...", "........" } },
+            { 'Q', new[] { "..XXX...", ".X...X..", "X.....X.", "X.....X.", "X...X.X.", ".X...X..", "..XXX.X.", "........" } },
+            { '8', new[] { "..XXX...", ".X...X..", ".X...X..", "..XXX...", ".X...X..", ".X...X..", "..XXX...", "........" } },
+            { 'B', new[] { "XXXXX...", "X....X..", "X....X..", "XXXXX...", "X....X..", "X....X..", "XXXXX...", "........" } },
+            { 'S', new[] { "..XXXX..", ".X......", ".X......", "..XXX...", ".....X..", ".....X..", "XXXXX...", "........" } },
+            { 'M', new[] { "X.....X.", "XX...XX.", "X.X.X.X.", "X..X..X.", "X.....X.", "X.....X.", "X.....X.", "........" } },
+            { 'N', new[] { "X.....X.", "XX....X.", "X.X...X.", "X..X..X.", "X...X.X.", "X....XX.", "X.....X.", "........" } },
+
+            // Grass blades, 1 px strokes rooted at the cell bottom, sparse -> dense.
+            { Sprout,     new[] { "........", "........", "........", "........", "........", "....X...", "....X...", "........" } },
+            { Blade,      new[] { "........", "........", "........", "........", "........", ".....X..", "....X...", "....X..." } },
+            { TallBlade,  new[] { "........", "........", "........", "...X....", "...X....", "....X...", "....X...", "....X..." } },
+            { TwinBlades, new[] { "........", "........", "........", "........", "..X...X.", "..X..X..", "...X.X..", "...X.X.." } },
+            { TallTwin,   new[] { "........", "........", ".X......", ".X....X.", "..X..X..", "..X..X..", "...X.X..", "...X.X.." } },
+            { Tuft,       new[] { "........", "....X...", ".X..X..X", ".X..X.X.", "..X.X.X.", "..X.X.X.", "...XXX..", "...XX..." } },
+            { ThickTuft,  new[] { "...X....", "X..X..X.", ".X.X.X..", ".X.X.X..", ".XX.X..X", "..X.X.X.", "..XXX.X.", "...XXX.." } },
+            { Sward,      new[] { "X..X.X..", "X.X..X.X", ".XX.X.X.", "X.X.XX.X", ".XX.X.X.", "X.XXX.X.", ".XX.XXX.", "..XXXX.." } },
         };
 
         // Line glyphs. Diagonals run corner to corner so they connect across cells.
@@ -84,7 +119,7 @@ namespace Aelid.Rendering
         static readonly string[] k_EdgeHorizontal = { "........", "........", "........", "XXXXXXXX", "XXXXXXXX", "........", "........", "........" };
         static readonly string[] k_EdgeSlash = { "......XX", ".....XX.", "....XX..", "...XX...", "..XX....", ".XX.....", "XX......", "X......." };
         static readonly string[] k_EdgeBackslash = { "XX......", ".XX.....", "..XX....", "...XX...", "....XX..", ".....XX.", "......XX", ".......X" };
-        static readonly string[] k_EdgeUnderscore = { "........", "........", "........", "........", "........", "........", "........", "XXXXXXXX" };
+        static readonly string[] k_Sparkle = { "........", "........", "...X....", "..XXX...", "...X....", "........", "........", "........" };
         static readonly string[] k_Solid = { "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX" };
 
         static Texture2D s_Default;
@@ -119,7 +154,7 @@ namespace Aelid.Rendering
                 Blit(pixels, row, ColEdgeHorizontal, k_EdgeHorizontal);
                 Blit(pixels, row, ColEdgeSlash, k_EdgeSlash);
                 Blit(pixels, row, ColEdgeBackslash, k_EdgeBackslash);
-                Blit(pixels, row, ColEdgeUnderscore, k_EdgeUnderscore);
+                Blit(pixels, row, ColSparkle, k_Sparkle);
                 Blit(pixels, row, ColSolid, k_Solid);
             }
 

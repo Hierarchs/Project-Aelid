@@ -7,8 +7,8 @@ An open-world fantasy MMORPG in **Unity 6 (URP)**: a fully 3D low-poly world ren
 
 ## Status: Milestone 1, visual foundation (working)
 
-- Hybrid ASCII renderer (URP RenderGraph feature) with per-surface glyph vocabularies, edge line glyphs, and characters kept in full 3D
-- Glyph-stable camera: 0.00% glyph change while scrolling (measured)
+- Hybrid ASCII renderer (URP RenderGraph feature): dark terminal-style look where glyph colour carries the lighting, per-surface glyph vocabularies (thin grass blades, letter-textured stone), flower/firefly sparkles, edge line glyphs, and characters kept in full 3D
+- Glyph-stable camera: 0.00% glyph change while scrolling (measured; ~42% without it)
 - Fixed-angle isometric follow camera with zoom
 - Controllable character (walk/run) with placeholder procedural animation
 - Day/night cycle: bright days, cold moonlit nights, warm firelight

@@ -33,18 +33,20 @@ lit 3D frame ─┬─► [1] Surface ID   redraw tagged renderers → R8 class 
 - **Glyphs:** 8×8 bitmaps drawn in `AsciiGlyphAtlas.cs` (original art, no font files). Each vocabulary is sorted by ink coverage at build time. Edge glyphs `| - / \` run corner to corner, so lines connect across cells.
 - **Surface classes:** the class is stored in Rendering Layer bits 1–7 (bit 0 stays Default, and bits 8+ are free for light layers). Tag objects with the `AsciiSurface` component, or by setting Rendering Layers in the inspector.
 
-| Class | Glyph vocabulary (dark → bright) | ASCII amount | Use |
-|---|---|---|---|
-| Default | ` .-:=+%*@#` | 100% | dirt, sand, snow, misc |
-| Exempt | (none) | 0% (configurable) | players, important enemies: full 3D with a dark rim |
-| Foliage | ` .,:;%*&♣♠` | 100% | trees, bushes |
-| Water | ` .-~=░≈≋▒▓` + animated ripple | 100% | water |
-| Stone | ` .-:=+H▒#▓` | 100% | rocks, cliffs, ruins |
-| Emissive | ` .'^+%*A@#` | 45% | fire, lamps, spells |
-| Grass | ``  .`,'";vwW `` | 100% | grassland |
-| Wood | ` .-:=+xH@#` | 100% | buildings, fences |
+| Class | Glyph vocabulary (dark → bright) | Shadow density floor | ASCII amount | Use |
+|---|---|---|---|---|
+| Default | ` .-:=+%*@#` | 0.30 | 100% | dirt, sand, snow, misc |
+| Exempt | (none) | n/a | 0% (configurable) | players, important enemies: full 3D with a dark rim |
+| Foliage | ` .,;o8*&♣♠` | 0.60 | 100% | trees, bushes |
+| Water | ` .-~=░≈≋▒▓` + animated ripple | 0.15 | 100% | water |
+| Stone | ` .:oOS8QMB` (thin letters) | 0.55 | 100% | rocks, cliffs, ruins |
+| Emissive | ` .'^+%*A@#` | 0.40 | 45% | fire, lamps, spells |
+| Grass | 8 custom thin blade glyphs + sparkles | 0.65 | 100% | grassland |
+| Wood | ` .-=+xNH@#` | 0.50 | 100% | buildings, fences |
 
-- **Configuration:** the `Aelid/ASCII` volume component sets intensity, cell size (density), exposure, contrast, gamma, dither, glyph brightness, background fill, saturation, edge sensitivity, Exempt and Emissive amounts, outline, and water ripple. Because it is a volume, settings blend: the Night volume already raises glyph exposure. Weather and local areas can do the same later.
+- **Light response (style target: dark terminal-style ASCII).** The background is near-black, and glyph color is the *lit* surface color, so light pools, shadows and firelight read through color rather than glyph count. A per-class **density floor** keeps shadowed surfaces textured with dim glyphs instead of empty space. Fully unlit cells still go black. World-anchored **color jitter** and stronger dithering on grass break up repetition.
+- **Sparkles:** a world-anchored sprinkle of accent glyphs on grass (and lightly on foliage). By day they are scene-lit white flowers. The Night volume turns them into self-lit, slowly pulsing HDR fireflies that bloom.
+- **Configuration:** the `Aelid/ASCII` volume component sets intensity, cell size (density), exposure, contrast, gamma, dither, density floor, glyph brightness, background fill, saturation, color normalize, color jitter, sparkles (density, color, self-lit, twinkle), edge sensitivity, Exempt and Emissive amounts, outline, and water ripple. Because it is a volume, settings blend: the Night volume raises glyph exposure and brightness and switches flowers to fireflies. Weather and local areas can do the same later.
 
 ### Glyph stability (working, measured)
 
@@ -55,7 +57,7 @@ Measured by `Aelid ▸ Capture Review Screenshots` (written to `Captures/stabili
 | Mode | Changed pixels |
 |---|---|
 | Raw 3D (reference) | 0.00% |
-| ASCII, snapping off | ~24% |
+| ASCII, snapping off | ~42% (dense textures make an unsnapped grid shimmer badly) |
 | **ASCII, snapping on** | **0.00%** |
 
 This is exact for the orthographic camera, which is the default. In perspective mode it is exact only at the player's depth.

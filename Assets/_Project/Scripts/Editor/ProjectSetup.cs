@@ -27,6 +27,8 @@ namespace Aelid.EditorTools
                 asset.supportsHDR = true;           // bloom on bright glyphs (fire, magic)
                 asset.shadowDistance = 90f;         // camera sits ~40 m from the action
                 asset.shadowCascadeCount = 2;
+                asset.supportsCameraDepthTexture = true;   // water shoreline / depth colour, even with ASCII off
+                asset.supportsCameraOpaqueTexture = true;  // water refraction of the bed
                 EditorUtility.SetDirty(asset);
             }
 

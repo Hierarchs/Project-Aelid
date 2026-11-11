@@ -29,7 +29,7 @@ namespace Aelid.EditorTools
 
         const float WorldHalfSize = 80f;
         const float QuadSize = 2f;
-        const float WaterLevel = -0.6f;
+        public const float WaterLevel = -0.6f;
         const float PathHalfWidth = 1.6f;
 
         static readonly Vector2 k_Village = new(0f, 0f);
@@ -79,7 +79,7 @@ namespace Aelid.EditorTools
 
             var world = new GameObject("World").transform;
             BuildTerrain(world);
-            BuildWater(world);
+            var waterReflection = BuildWater(world);
             BuildVillage(world);
             BuildField(world);
             BuildRuins(world);
@@ -89,6 +89,7 @@ namespace Aelid.EditorTools
 
             var player = BuildPlayer();
             var (cam, rig, asciiCam) = BuildCamera(player);
+            waterReflection.sourceCamera = cam;
             var dayNight = BuildEnvironment();
 
             var debug = new GameObject("Dev Overlay").AddComponent<DevOverlay>();
@@ -132,7 +133,7 @@ namespace Aelid.EditorTools
             h = Mathf.Lerp(h, 0.25f + detail * 0.25f, 1f - Smooth(13f, 24f, Vector2.Distance(p, k_Village)));
             h = Mathf.Lerp(h, 4.2f + detail * 0.3f, 1f - Smooth(7f, 17f, Vector2.Distance(p, k_Ruins)));
             h = Mathf.Lerp(h, 0.6f + detail * 0.2f, 1f - Smooth(7f, 11f, DistanceToRect(p, k_Field)));
-            h = Mathf.Lerp(h, -2.1f, 1f - Smooth(5f, 12.5f, Vector2.Distance(p, k_Pond)));
+            h = Mathf.Lerp(h, -1.05f, 1f - Smooth(5f, 12.5f, Vector2.Distance(p, k_Pond))); // knee-deep wading (~0.45 m)
             return h;
         }
 
@@ -240,7 +241,7 @@ namespace Aelid.EditorTools
 
         // ------------------------------------------------------------------ water
 
-        static void BuildWater(Transform world)
+        static PlanarReflection BuildWater(Transform world)
         {
             var mesh = new LowPolyMesh();
             const float step = 1.5f;
@@ -257,10 +258,37 @@ namespace Aelid.EditorTools
                     mesh.Tri(p00, p11, p10);
                 }
             var water = MeshObject("Pond", world, SaveMesh(mesh.ToMesh("Water_Pond")),
-                Mat("Water", new Color(0.14f, 0.40f, 0.56f), 0.85f), AsciiSurfaceClass.Water,
+                WaterMaterial(), AsciiSurfaceClass.Water,
                 new Vector3(k_Pond.x, WaterLevel, k_Pond.y), Quaternion.identity, Vector3.one);
-            water.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
-            water.AddComponent<WaterWaves>();
+            water.layer = 4; // built-in "Water" layer; kept out of its own reflection
+            var renderer = water.GetComponent<MeshRenderer>();
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = true;
+            water.AddComponent<WaterBody>().radius = 13f;
+            return water.AddComponent<PlanarReflection>();
+        }
+
+        static Material WaterMaterial()
+        {
+            // The pre-overhaul pond used a URP/Lit material; remove it so it can't be picked up again.
+            if (AssetDatabase.LoadAssetAtPath<Material>(MaterialDir + "/Water.mat") != null)
+                AssetDatabase.DeleteAsset(MaterialDir + "/Water.mat");
+
+            string path = MaterialDir + "/Water_Pond.mat";
+            var shader = Shader.Find("Aelid/Water");
+            var fresh = new Material(shader) { name = "Water_Pond" };
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                AssetDatabase.CreateAsset(fresh, path);
+                return fresh;
+            }
+            // Reset to the shader's defaults (keeps the asset GUID), so Water.shader is the
+            // single source of truth for the look; tweak the defaults there.
+            EditorUtility.CopySerialized(fresh, material);
+            Object.DestroyImmediate(fresh);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         // ------------------------------------------------------------------ village
@@ -330,6 +358,9 @@ namespace Aelid.EditorTools
             Vector2[] lamps = { new(5f, -5f), new(-5f, -5f), new(-5f, 5f), new(6f, 7.5f), new(9f, -3f) };
             foreach (var l in lamps)
                 BuildLampPost(root, new Vector3(l.x, Height(l.x, l.y), l.y));
+
+            // On the pond's north bank, so its light is mirrored in the water at night.
+            BuildLampPost(root, Ground(24.5f, -3.2f));
         }
 
         static void BuildCampfire(Transform parent, Vector3 pos)
@@ -664,7 +695,7 @@ namespace Aelid.EditorTools
         static bool IsFree(Vector2 p, float pathClearance)
         {
             if (Vector2.Distance(p, k_Village) < 19f) return false;
-            if (Vector2.Distance(p, k_Pond) < 14f) return false;
+            if (Vector2.Distance(p, k_Pond) < 13.2f) return false; // trees may stand on the bank and reflect
             if (Vector2.Distance(p, k_Ruins) < 10f) return false;
             if (Vector2.Distance(p, k_Camp) < 7f) return false;
             if (DistanceToRect(p, k_Field) < 2.5f) return false;
@@ -709,6 +740,7 @@ namespace Aelid.EditorTools
             var controller = player.AddComponent<PlayerController>();
             controller.input = input;
             player.AddComponent<AsciiSurface>().SurfaceClass = AsciiSurfaceClass.Exempt;
+            player.AddComponent<WaterRippleEmitter>();
 
             var tunic = Mat("Player_Tunic", new Color(0.64f, 0.12f, 0.10f));
             var pants = Mat("Player_Pants", new Color(0.26f, 0.20f, 0.15f));

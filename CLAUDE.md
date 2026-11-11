@@ -8,3 +8,5 @@
 - Camera textures in URP intermediates may be stored bottom-up. Shaders use `_AsciiOrientation` (queried via `GetTextureUVOrigin`), never `UNITY_UV_STARTS_AT_TOP`.
 - Verify visual changes with `AsciiCaptureTool.BuildAndCaptureFromCommandLine` (batch mode; writes `Captures/` + `stability.txt`). Run EditMode and PlayMode tests after code changes. Batch mode fails if the user has the project open in the Editor.
 - The first render after loading a scene in batch mode has a stale post grade; the capture tool renders a warm-up frame.
+- Water look lives in `Water.shader` property defaults (the builder resets `Water_Pond.mat` to them). Reflection cameras are `CameraType.Reflection` and must stay skipped by the ASCII pass.
+- `PlayerMotor` sets `CharacterController.minMoveDistance = 0`; the default drops moves at high frame rates.

@@ -537,7 +537,9 @@ namespace Aelid.EditorTools
                 float a = (float)s_Rng.NextDouble() * Mathf.PI * 2f;
                 float r = 1.8f + (float)s_Rng.NextDouble() * 5f;
                 Vector3 p = Ground(c.x + Mathf.Cos(a) * r, c.z + Mathf.Sin(a) * r);
-                rubble.Box(p + Vector3.up * 0.06f, new Vector3(1.0f, 0.12f, 1.0f), Quaternion.Euler(0, (float)s_Rng.NextDouble() * 90f, 0));
+                // Keep the same random draws so changing the floor does not reshuffle the rest of the world.
+                float yaw = (float)s_Rng.NextDouble() * 90f;
+                RuinFloorTiles.AddTo(rubble, p, yaw, i);
             }
             MeshObject("Rubble", root, SaveMesh(rubble.ToMesh("Ruins_Rubble")), mossStone, AsciiSurfaceClass.Stone, Vector3.zero, Quaternion.identity, Vector3.one, true);
 

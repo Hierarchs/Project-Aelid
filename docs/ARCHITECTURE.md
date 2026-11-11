@@ -83,9 +83,28 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 - **`WaterRipples`**: a 16-slot global ring buffer (`_WaterRipples`, `_WaterTime`) that anything can emit into. **`WaterRippleEmitter`** on a character emits a splash on entering, one ring per stride, and soft rings while standing. **`WaterBody`** answers "is this point in water, and at what height?"
 - The surface-ID pass draws transparent renderers after opaques, so water over a wading character's legs becomes water glyphs while the body above stays 3D.
 
+## Ruins paving (Unity validation pending)
+
+`RuinFloorTiles` adds six repeating stone treatments to the existing 14 paving
+positions: lightly worn slabs, partly buried stones, lifted edges, long narrow
+slabs, chipped corners, and split slabs with open diagonal seams. Heights and
+tilts stay small enough for the player's 0.4 m step offset. The tiles remain in
+`Ruins_Rubble` with its existing Stone surface class, material, and mesh collider;
+they add no renderers or scene objects.
+
+The builder consumes the same random values as before, so the new shapes do not
+reshuffle vegetation or other scenery. The generated rubble mesh can be updated
+without changing `VerticalSlice.unity`, keeping independently placed vines and
+props intact. A full scene rebuild still overwrites hand edits; avoid it when
+merging custom scenery.
+
+Geometry tests cover closed, outward-facing stones, bounded step heights, and
+repeatability. Unity import, play tests, and visual capture status should be
+checked separately before treating the new paving as validated in game.
+
 ## Tests and tools
 
-- **Edit mode (9):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math (surface points and mirror images), the reflection camera's setup, and ripple expiry.
+- **Edit mode (16 defined):** the original 9 cover glyph ramps, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry. Seven additional cases cover the new paving geometry and repeatability; their Unity execution is pending.
 - **Play mode (9):** loads the real scene and drives it with a virtual keyboard. W walks north and the camera follows; sprint speed; full speed at very high frame rates (regression test); ground contact; snap offsets stay within one cell; wading emits ripples; time progresses and night falls; F1 toggles ASCII. Any logged error fails the run.
 - **Captures:** 11 review shots (ASCII and raw) across times of day, including wading in the pond, plus the glyph atlas preview, the mirror cameras' raw reflection textures, and the stability report. Water time is frozen, so shots are repeatable.
 - **Debug views:** `AsciiRuntimeOverrides.DebugView` shows scene passthrough, cell color, surface class, glyph color, or the atlas tiled across the screen (useful for orientation checks).

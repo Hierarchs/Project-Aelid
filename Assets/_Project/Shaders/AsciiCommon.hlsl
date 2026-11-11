@@ -12,6 +12,7 @@
 #define ASCII_COL_EDGE_SLASH  12
 #define ASCII_COL_EDGE_BACK   13
 #define ASCII_COL_SPARKLE     14
+#define ASCII_CLASS_DEFAULT   0
 #define ASCII_CLASS_EXEMPT    1
 #define ASCII_CLASS_WATER     3
 #define ASCII_CLASS_GRASS     6
@@ -39,7 +40,7 @@ bool AsciiRowsGoDown()
     return _AsciiOrientation.x > 0.5;
 }
 float4 _AsciiClassParams[16]; // per class: x ascii amount, y atlas row, z edges on, w dither scale
-float4 _AsciiClassParams2[16];// per class: x density floor, y sparkle weight
+float4 _AsciiClassParams2[16];// per class: x density floor, y sparkle weight, z color jitter scale
 float4 _AsciiSparkle;         // rgb: sparkle color (HDR), a: density
 float4 _AsciiSparkle2;        // x: self-lit, y: twinkle, z: color jitter, w: density floor scale
 float4 _AelidWeatherWind;     // xy: world XZ wind, z: wind time, w: strength

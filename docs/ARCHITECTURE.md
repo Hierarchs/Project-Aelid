@@ -35,16 +35,17 @@ lit 3D frame ─┬─► [1] Surface ID   redraw tagged renderers → R8 class 
 
 | Class | Glyph vocabulary (dark → bright) | Shadow density floor | ASCII amount | Use |
 |---|---|---|---|---|
-| Default | ` .-:=+%*@#` | 0.30 | 100% | dirt, sand, snow, misc |
+| Default | sparse dots | 0.14 | 80% | dirt, sand, snow, untagged surfaces |
 | Exempt | (none) | n/a | 0% (configurable) | players, important enemies: full 3D with a dark rim |
 | Foliage | ` .,;o8*&♣♠` | 0.60 | 100% | trees, bushes |
 | Water | ` .-~=░≈≋▒▓` + animated ripple | 0.15 | 100% | water |
 | Stone | ` .:oOS8QMB` (thin letters) | 0.55 | 100% | rocks, cliffs, ruins |
 | Emissive | ` .'^+%*A@#` | 0.40 | 45% | fire, lamps, spells |
-| Grass | 8 custom thin blade glyphs + sparkles | 0.65 | 100% | grassland |
+| Grass | 8 custom thin blade glyphs + sparkles | 0.40 | 100% | grassland |
 | Wood | ` .-=+xNH@#` | 0.50 | 100% | buildings, fences |
 
 - **Light response (style target: dark terminal-style ASCII).** The background is near-black, and glyph color is the *lit* surface color, so light pools, shadows and firelight read through color rather than glyph count. A per-class **density floor** keeps shadowed surfaces textured with dim glyphs instead of empty space. Fully unlit cells still go black. World-anchored **color jitter** and stronger dithering on grass break up repetition.
+- **Ground readability:** grass uses lower dithering and color jitter so its blade motion stays visible without competing with characters. Default surfaces retain a muted base-color fill with sparse dots, which keeps dirt routes readable in snow. Exempt silhouettes have a dark outer rim and a soft inner highlight.
 - **Sparkles:** a world-anchored sprinkle of accent glyphs on grass (and lightly on foliage). By day they are scene-lit white flowers. The Night volume turns them into self-lit, slowly pulsing HDR fireflies that bloom.
 - **Configuration:** the `Aelid/ASCII` volume component sets intensity, cell size (density), exposure, contrast, gamma, dither, density floor, glyph brightness, background fill, saturation, color normalize, color jitter, sparkles (density, color, self-lit, twinkle), edge sensitivity, Exempt and Emissive amounts, outline, and water ripple. Because it is a volume, settings blend: the Night volume raises glyph exposure and brightness and switches flowers to fireflies. Weather and local areas can do the same later.
 

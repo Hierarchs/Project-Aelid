@@ -205,6 +205,9 @@ Shader "Hidden/Aelid/Ascii"
                 }
 
                 int glyph = clamp((int)(saturate(density) * ASCII_LEVELS), 0, ASCII_LEVELS - 1);
+                // Sparse dots leave the ground under roads readable as a continuous shape.
+                if (surfaceClass == ASCII_CLASS_DEFAULT)
+                    glyph = noise + 0.5 < saturate(density) * 0.55 ? 1 : 0;
 
                 // --- Sparkles: sparse world-anchored accents (flowers / fireflies) ---
                 bool sparkle = classParams2.y > 0.0 && AsciiHash2(worldCell) < _AsciiSparkle.a * classParams2.y;
@@ -227,7 +230,7 @@ Shader "Hidden/Aelid/Ascii"
                 float l = max(AsciiLuminance(color), 1e-4);
                 color = max(lerp(l.xxx, color, _AsciiColor.z), 0.0);
                 float normalizeBoost = lerp(1.0, clamp(0.35 / l, 0.25, 6.0), _AsciiColor.w);
-                float jitter = 1.0 + (AsciiHash(worldCell + int2(17, 59)) - 0.5) * 2.0 * _AsciiSparkle2.z;
+                float jitter = 1.0 + (AsciiHash(worldCell + int2(17, 59)) - 0.5) * 2.0 * _AsciiSparkle2.z * classParams2.z;
                 float3 foreground = color * _AsciiColor.x * normalizeBoost * jitter;
 
                 if (sparkle)
@@ -329,16 +332,23 @@ Shader "Hidden/Aelid/Ascii"
                 float amount = saturate(_AsciiClassParams[pixelClass].x) * _AsciiMisc.w;
                 float3 result = lerp(scene, ascii, amount);
 
-                // Dark rim around Exempt silhouettes (characters) for readability.
-                if (_AsciiMisc.z > 0.0 && pixelClass != ASCII_CLASS_EXEMPT)
+                // The outer rim separates silhouettes from snow. The subtle
+                // inner highlight keeps those same edges readable in shadows.
+                if (_AsciiMisc.z > 0.0)
                 {
                     int r = max(1, cs / 8);
-                    bool rim = LoadClass(qc + int2(r, 0), size) == ASCII_CLASS_EXEMPT
-                            || LoadClass(qc - int2(r, 0), size) == ASCII_CLASS_EXEMPT
-                            || LoadClass(qc + int2(0, r), size) == ASCII_CLASS_EXEMPT
-                            || LoadClass(qc - int2(0, r), size) == ASCII_CLASS_EXEMPT;
+                    bool exempt = pixelClass == ASCII_CLASS_EXEMPT;
+                    bool rim = ((LoadClass(qc + int2(r, 0), size) == ASCII_CLASS_EXEMPT) != exempt)
+                            || ((LoadClass(qc - int2(r, 0), size) == ASCII_CLASS_EXEMPT) != exempt)
+                            || ((LoadClass(qc + int2(0, r), size) == ASCII_CLASS_EXEMPT) != exempt)
+                            || ((LoadClass(qc - int2(0, r), size) == ASCII_CLASS_EXEMPT) != exempt);
                     if (rim)
-                        result = lerp(result, _AsciiOutlineColor.rgb, _AsciiMisc.z * _AsciiMisc.w);
+                    {
+                        float opacity = _AsciiMisc.z * _AsciiMisc.w;
+                        result = exempt
+                            ? lerp(result, max(result, 0.73), opacity * 0.38)
+                            : lerp(result, _AsciiOutlineColor.rgb, opacity);
+                    }
                 }
 
                 int debugView = (int)_AsciiDebug.x;

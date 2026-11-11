@@ -1,0 +1,65 @@
+fileFormatVersion: 2
+guid: 977dad9d8d5f52cb9e4295c268d64fa3
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Aelid | Cut Limestone"
+    second: {fileID: 2100000, guid: c8d66c8abf505e6a8717299d9606f4bd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Aelid | Limestone 1"
+    second: {fileID: 2100000, guid: f5e3a44677fe5f6c8accc95f223a10f7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Aelid | Limestone 2"
+    second: {fileID: 2100000, guid: d0e69a50ac3a53a2ae4650fb9d96cc17, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Aelid | Limestone 3"
+    second: {fileID: 2100000, guid: b97f05e514a956ffa0a313631ef485b1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Aelid | Limestone 4"
+    second: {fileID: 2100000, guid: c815b94fa4c65b4288387ca5442c6a6c, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  isReadable: 0
+  meshes:
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    useFileScale: 1
+  tangentSpace:
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 0
+  animationType: 0
+  avatarSetup: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

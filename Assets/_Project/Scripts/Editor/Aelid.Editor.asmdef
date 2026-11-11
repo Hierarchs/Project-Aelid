@@ -1,0 +1,24 @@
+{
+    "name": "Aelid.Editor",
+    "rootNamespace": "Aelid.EditorTools",
+    "references": [
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.InputSystem",
+        "Aelid.Rendering",
+        "Aelid.Environment",
+        "Aelid.Gameplay",
+        "Aelid.Debugging"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -65,6 +65,16 @@ namespace Aelid.EditorTools
             Build();
         }
 
+        [MenuItem("Aelid/Setup/Refresh Ground Materials")]
+        public static void RefreshGroundMaterials()
+        {
+            GroundMaterials.WriteLayout(k_Paths, k_Ruins, PathHalfWidth);
+            GroundMaterials.Get("Terrain_GrassA");
+            GroundMaterials.Get("Terrain_GrassB");
+            GroundMaterials.Get("Terrain_Dirt");
+            AssetDatabase.SaveAssets();
+        }
+
         public static void Build()
         {
             ProjectSetup.Apply();
@@ -164,6 +174,7 @@ namespace Aelid.EditorTools
 
         static void BuildTerrain(Transform world)
         {
+            GroundMaterials.WriteLayout(k_Paths, k_Ruins, PathHalfWidth);
             var root = new GameObject("Terrain").transform;
             root.SetParent(world, false);
 
@@ -199,9 +210,9 @@ namespace Aelid.EditorTools
                     else { AddTri(i00, i01, i10); AddTri(i10, i01, i11); }
                 }
 
-            AddTerrainPart(root, "Grass A", buckets["GrassA"], Mat("Terrain_GrassA", new Color(0.20f, 0.46f, 0.17f)), AsciiSurfaceClass.Grass);
-            AddTerrainPart(root, "Grass B", buckets["GrassB"], Mat("Terrain_GrassB", new Color(0.26f, 0.53f, 0.18f)), AsciiSurfaceClass.Grass);
-            AddTerrainPart(root, "Dirt", buckets["Dirt"], Mat("Terrain_Dirt", new Color(0.50f, 0.38f, 0.24f)), AsciiSurfaceClass.Default);
+            AddTerrainPart(root, "Grass A", buckets["GrassA"], GroundMaterials.Get("Terrain_GrassA"), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Grass B", buckets["GrassB"], GroundMaterials.Get("Terrain_GrassB"), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Dirt", buckets["Dirt"], GroundMaterials.Get("Terrain_Dirt"), AsciiSurfaceClass.Default);
             AddTerrainPart(root, "Rock", buckets["Rock"], Mat("Terrain_Rock", new Color(0.42f, 0.40f, 0.38f)), AsciiSurfaceClass.Stone);
             AddTerrainPart(root, "Sand", buckets["Sand"], Mat("Terrain_Sand", new Color(0.70f, 0.63f, 0.44f)), AsciiSurfaceClass.Default);
             AddTerrainPart(root, "Snow", buckets["Snow"], Mat("Terrain_Snow", new Color(0.88f, 0.90f, 0.95f), 0.3f), AsciiSurfaceClass.Default);

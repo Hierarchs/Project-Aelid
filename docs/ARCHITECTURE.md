@@ -22,7 +22,7 @@ Gameplay does not reference Rendering, and Rendering does not reference Gameplay
 `AsciiRendererFeature` is a URP 17 RenderGraph feature added to `PC_Renderer` and `Mobile_Renderer`. It runs at **Before Post-Processing**, so bloom and color grading apply to the glyphs (fire and magic glyphs glow).
 
 ```
-lit 3D frame ─┬─► [1] Surface ID   redraw tagged renderers → R8 class mask (full res)
+lit 3D frame ─┬─► [1] Surface ID   renderer classes + ground coverage → R8 class mask (full res)
               ├─► [2] Reduce       per cell: average color, class, depth, normal (cell res, MRT)
               │       [3] Select   per cell: glyph = density ramp + dither, or line glyph on edges
               └─► [4] Composite    per pixel: draw glyph; Exempt pixels stay 3D; outline; sub-cell shift
@@ -83,6 +83,43 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 - **`WaterRipples`**: a 16-slot global ring buffer (`_WaterRipples`, `_WaterTime`) that anything can emit into. **`WaterRippleEmitter`** on a character emits a splash on entering, one ring per stride, and soft rings while standing. **`WaterBody`** answers "is this point in water, and at what height?"
 - The surface-ID pass draws transparent renderers after opaques, so water over a wading character's legs becomes water glyphs while the body above stays 3D.
 
+## Grass and dirt surfaces (Unity validation pending)
+
+`Aelid/Ground` replaces flat colours on the three existing grass/dirt materials.
+It evaluates texture in world XZ coordinates without requiring mesh UVs: broad
+grass clumps, dry tips, fine blade strokes, damp/dry soil, small clods, and sparse
+pebbles. Detail strokes use pixel-footprint filtering. Nothing animates, so the
+material does not introduce deliberate texture movement beneath the ASCII grid.
+
+The grass and dirt buckets share the same colour field. Path shoulders blend
+with irregular edges, and the ruins have patches of exposed earth rather than
+material boundaries following terrain triangles. `GroundLayout.hlsl` is generated
+from the builder's path segments, ruins centre, and path width. Both full scene
+builds and **Aelid → Setup → Refresh Ground Materials** keep it in sync; the refresh
+command updates materials/layout without replacing scene objects. The saved
+materials already reference the shader, so a scene rebuild is unnecessary.
+
+The surface-ID RenderGraph pass draws ground's own `AelidGroundSurfaceId` pass
+after the opaque override IDs and before water IDs. Its world-locked coverage
+dithering chooses the existing Grass or Default class per pixel from the same
+blend used for colour. Grass blades and flowers therefore follow the grassy
+shoulders, while the path keeps dirt glyphs. Ground depth and normals are still
+tested normally, so foreground characters and water retain their classes. The
+composite also mirrors some grass density glyphs using the existing world-cell
+hash; line glyphs remain unchanged.
+
+Tune colours, detail strength, and path shoulder width on the ground materials.
+For unrelated ground areas, turn off **Follow Vertical Slice Paths** and use
+**Grass Amount**. The shader includes forward lighting, shadow caster, depth,
+depth-normal, and ASCII coverage passes; grass/dirt geometry and colliders are
+unchanged. The additional ID draws and procedural texture cost are not profiled.
+
+Validation: 26 DXC entry/variant compilations passed against the pinned URP
+headers, including the changed ASCII shader; ground setup/tests compile against
+Unity's managed assemblies; the managed layout export test and generated-layout
+comparison passed. Unity import, gameplay tests, captures, and the camera-motion
+stability measurement remain pending because the cloud editor has no license.
+
 ## Ruins paving (Unity validation pending)
 
 `RuinFloorTiles` adds six repeating stone treatments to the existing 14 paving
@@ -104,7 +141,7 @@ checked separately before treating the new paving as validated in game.
 
 ## Tests and tools
 
-- **Edit mode (16 defined):** the original 9 cover glyph ramps, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry. Seven additional cases cover the new paving geometry and repeatability; their Unity execution is pending.
+- **Edit mode (20 defined):** the original 9 cover glyph ramps, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry. Seven additional cases cover paving geometry/repeatability, and four cover ground materials and layout export. The layout export case passed as managed code outside Unity; Unity execution of the added cases is pending.
 - **Play mode (9):** loads the real scene and drives it with a virtual keyboard. W walks north and the camera follows; sprint speed; full speed at very high frame rates (regression test); ground contact; snap offsets stay within one cell; wading emits ripples; time progresses and night falls; F1 toggles ASCII. Any logged error fails the run.
 - **Captures:** 11 review shots (ASCII and raw) across times of day, including wading in the pond, plus the glyph atlas preview, the mirror cameras' raw reflection textures, and the stability report. Water time is frozen, so shots are repeatable.
 - **Debug views:** `AsciiRuntimeOverrides.DebugView` shows scene passthrough, cell color, surface class, glyph color, or the atlas tiled across the screen (useful for orientation checks).

@@ -199,11 +199,11 @@ namespace Aelid.EditorTools
                     else { AddTri(i00, i01, i10); AddTri(i10, i01, i11); }
                 }
 
-            AddTerrainPart(root, "Grass A", buckets["GrassA"], Mat("Terrain_GrassA", new Color(0.20f, 0.46f, 0.17f)), AsciiSurfaceClass.Grass);
-            AddTerrainPart(root, "Grass B", buckets["GrassB"], Mat("Terrain_GrassB", new Color(0.26f, 0.53f, 0.18f)), AsciiSurfaceClass.Grass);
-            AddTerrainPart(root, "Dirt", buckets["Dirt"], Mat("Terrain_Dirt", new Color(0.50f, 0.38f, 0.24f)), AsciiSurfaceClass.Default);
-            AddTerrainPart(root, "Rock", buckets["Rock"], Mat("Terrain_Rock", new Color(0.42f, 0.40f, 0.38f)), AsciiSurfaceClass.Stone);
-            AddTerrainPart(root, "Sand", buckets["Sand"], Mat("Terrain_Sand", new Color(0.70f, 0.63f, 0.44f)), AsciiSurfaceClass.Default);
+            AddTerrainPart(root, "Grass A", buckets["GrassA"], Mat("Terrain_GrassA", new Color(0.15f, 0.34f, 0.22f)), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Grass B", buckets["GrassB"], Mat("Terrain_GrassB", new Color(0.19f, 0.38f, 0.25f)), AsciiSurfaceClass.Grass);
+            AddTerrainPart(root, "Dirt", buckets["Dirt"], Mat("Terrain_Dirt", new Color(0.29f, 0.29f, 0.32f)), AsciiSurfaceClass.Default);
+            AddTerrainPart(root, "Rock", buckets["Rock"], Mat("Terrain_Rock", new Color(0.34f, 0.38f, 0.43f)), AsciiSurfaceClass.Stone);
+            AddTerrainPart(root, "Sand", buckets["Sand"], Mat("Terrain_Sand", new Color(0.40f, 0.40f, 0.38f)), AsciiSurfaceClass.Default);
             AddTerrainPart(root, "Snow", buckets["Snow"], Mat("Terrain_Snow", new Color(0.88f, 0.90f, 0.95f), 0.3f), AsciiSurfaceClass.Default);
 
             var collisionMesh = new Mesh { name = "Terrain_Collision", indexFormat = IndexFormat.UInt32 };
@@ -298,11 +298,11 @@ namespace Aelid.EditorTools
             var root = new GameObject("Village").transform;
             root.SetParent(world, false);
 
-            var walls = Mat("House_Walls", new Color(0.66f, 0.55f, 0.40f));
-            var timber = Mat("House_Timber", new Color(0.30f, 0.19f, 0.11f));
-            var roofRed = Mat("House_Roof_Red", new Color(0.56f, 0.20f, 0.13f));
-            var roofSlate = Mat("House_Roof_Slate", new Color(0.27f, 0.30f, 0.37f));
-            var stone = Mat("Stone", new Color(0.46f, 0.45f, 0.43f));
+            var walls = Mat("House_Walls", new Color(0.46f, 0.42f, 0.36f));
+            var timber = Mat("House_Timber", new Color(0.24f, 0.20f, 0.18f));
+            var roofRed = Mat("House_Roof_Red", new Color(0.40f, 0.24f, 0.21f));
+            var roofSlate = Mat("House_Roof_Slate", new Color(0.22f, 0.27f, 0.34f));
+            var stone = Mat("Stone", new Color(0.39f, 0.43f, 0.47f));
             var window = Mat("Window", new Color(0.08f, 0.07f, 0.05f), 0.6f, 0f, Color.black);
 
             var wallMesh = SaveMesh(Build(m => m.Box(new Vector3(0, 1.6f, 0), new Vector3(6f, 3.2f, 5f)), "House_Walls"));
@@ -349,7 +349,7 @@ namespace Aelid.EditorTools
 
                 var nightLight = house.gameObject.AddComponent<NightLight>();
                 nightLight.emissiveRenderers = new Renderer[] { win.GetComponent<MeshRenderer>() };
-                nightLight.emission = new Color(2.0f, 1.0f, 0.28f);
+                nightLight.emission = new Color(1.8f, 0.72f, 0.20f);
             }
 
             BuildCampfire(root, new Vector3(0f, Height(0, 0), 0f));
@@ -375,19 +375,19 @@ namespace Aelid.EditorTools
                 float a = i * Mathf.PI * 2f / 9f;
                 stones.Blob(new Vector3(Mathf.Cos(a) * 0.95f, 0.12f, Mathf.Sin(a) * 0.95f), new Vector3(0.28f, 0.2f, 0.25f), 0, 0.25f, 100 + i);
             }
-            MeshObject("Stones", root, SaveMesh(stones.ToMesh("Campfire_Stones")), Mat("Stone", new Color(0.46f, 0.45f, 0.43f)), AsciiSurfaceClass.Stone, Vector3.zero, Quaternion.identity, Vector3.one);
+            MeshObject("Stones", root, SaveMesh(stones.ToMesh("Campfire_Stones")), Mat("Stone", new Color(0.39f, 0.43f, 0.47f)), AsciiSurfaceClass.Stone, Vector3.zero, Quaternion.identity, Vector3.one);
 
             var logs = new LowPolyMesh();
             for (int i = 0; i < 4; i++)
                 logs.Box(new Vector3(0, 0.15f, 0), new Vector3(0.18f, 0.18f, 1.3f), Quaternion.Euler(10f, i * 45f, 0f));
-            MeshObject("Logs", root, SaveMesh(logs.ToMesh("Campfire_Logs")), Mat("House_Timber", new Color(0.30f, 0.19f, 0.11f)), AsciiSurfaceClass.Wood, Vector3.zero, Quaternion.identity, Vector3.one);
+            MeshObject("Logs", root, SaveMesh(logs.ToMesh("Campfire_Logs")), Mat("House_Timber", new Color(0.24f, 0.20f, 0.18f)), AsciiSurfaceClass.Wood, Vector3.zero, Quaternion.identity, Vector3.one);
 
             var flames = new LowPolyMesh();
             flames.Cone(new Vector3(0, 0.15f, 0), 0.42f, 1.1f, 5, 0f);
             flames.Cone(new Vector3(0.18f, 0.15f, 0.1f), 0.25f, 0.75f, 5, 30f);
             flames.Cone(new Vector3(-0.15f, 0.15f, -0.12f), 0.22f, 0.65f, 5, 60f);
             var flame = MeshObject("Flames", root, SaveMesh(flames.ToMesh("Campfire_Flames")),
-                Mat("Fire", new Color(1f, 0.55f, 0.15f), 0f, 0f, new Color(6f, 2.4f, 0.5f)), AsciiSurfaceClass.Emissive, Vector3.zero, Quaternion.identity, Vector3.one);
+                Mat("Fire", new Color(1f, 0.55f, 0.15f), 0f, 0f, new Color(3.9f, 1.1f, 0.22f)), AsciiSurfaceClass.Emissive, Vector3.zero, Quaternion.identity, Vector3.one);
             flame.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
 
             var lightGo = new GameObject("Fire Light");
@@ -395,7 +395,7 @@ namespace Aelid.EditorTools
             lightGo.transform.localPosition = new Vector3(0, 1.1f, 0);
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
-            light.color = new Color(1f, 0.44f, 0.12f); // saturated so lit grass turns ochre-orange
+            light.color = new Color(1f, 0.56f, 0.27f);
             light.intensity = 24f;
             light.range = 18f;
             lightGo.AddComponent<FlickerLight>().baseIntensity = 24f;
@@ -449,7 +449,7 @@ namespace Aelid.EditorTools
             night.lights = new[] { light };
             night.intensity = 8f;
             night.emissiveRenderers = new Renderer[] { headGo.GetComponent<MeshRenderer>() };
-            night.emission = new Color(2.6f, 1.35f, 0.35f);
+            night.emission = new Color(2.4f, 1.0f, 0.26f);
             var col = root.gameObject.AddComponent<CapsuleCollider>();
             col.radius = 0.15f;
             col.height = 3f;
@@ -469,7 +469,7 @@ namespace Aelid.EditorTools
                     var p = Ground(x, z);
                     crops.Blob(p + Vector3.up * 0.35f, new Vector3(0.35f, 0.45f, 0.3f), 0, 0.3f, seed++);
                 }
-            MeshObject("Crops", root, SaveMesh(crops.ToMesh("Field_Crops")), Mat("Wheat", new Color(0.78f, 0.64f, 0.26f)), AsciiSurfaceClass.Grass, Vector3.zero, Quaternion.identity, Vector3.one);
+            MeshObject("Crops", root, SaveMesh(crops.ToMesh("Field_Crops")), Mat("Wheat", new Color(0.59f, 0.51f, 0.32f)), AsciiSurfaceClass.Grass, Vector3.zero, Quaternion.identity, Vector3.one);
 
             var fence = new LowPolyMesh();
             var corners = new[]
@@ -506,8 +506,8 @@ namespace Aelid.EditorTools
         {
             var root = new GameObject("Hilltop Ruins").transform;
             root.SetParent(world, false);
-            var ruinStone = Mat("Ruin_Stone", new Color(0.52f, 0.50f, 0.47f));
-            var mossStone = Mat("Ruin_Moss", new Color(0.36f, 0.42f, 0.30f));
+            var ruinStone = Mat("Ruin_Stone", new Color(0.42f, 0.47f, 0.52f));
+            var mossStone = Mat("Ruin_Moss", new Color(0.29f, 0.38f, 0.33f));
 
             var pillars = new LowPolyMesh();
             float[] heights = { 5.2f, 0f, 3.6f, 1.2f, 4.8f, 0.7f, 0f, 2.6f, 5.0f, 1.8f };
@@ -579,11 +579,11 @@ namespace Aelid.EditorTools
             var bushes = new GameObject("Bushes").transform;
             bushes.SetParent(world, false);
 
-            var trunkMat = Mat("Tree_Trunk", new Color(0.33f, 0.22f, 0.13f));
-            var pineMat = Mat("Tree_Pine", new Color(0.16f, 0.38f, 0.21f));
-            var oakMats = new[] { Mat("Tree_Oak_A", new Color(0.28f, 0.53f, 0.18f)), Mat("Tree_Oak_B", new Color(0.38f, 0.57f, 0.16f)) };
-            var bushMat = Mat("Bush", new Color(0.25f, 0.47f, 0.19f));
-            var rockMat = Mat("Rock", new Color(0.44f, 0.43f, 0.41f));
+            var trunkMat = Mat("Tree_Trunk", new Color(0.27f, 0.23f, 0.21f));
+            var pineMat = Mat("Tree_Pine", new Color(0.13f, 0.27f, 0.23f));
+            var oakMats = new[] { Mat("Tree_Oak_A", new Color(0.20f, 0.37f, 0.28f)), Mat("Tree_Oak_B", new Color(0.25f, 0.39f, 0.32f)) };
+            var bushMat = Mat("Bush", new Color(0.19f, 0.34f, 0.27f));
+            var rockMat = Mat("Rock", new Color(0.35f, 0.40f, 0.44f));
 
             var trunk = SaveMesh(Build(m => m.Cylinder(Vector3.zero, 0.22f, 0.16f, 1.6f, 5), "Tree_Trunk"));
             var pines = new Mesh[3];
@@ -794,6 +794,7 @@ namespace Aelid.EditorTools
             rig.cam = cam;
             rig.target = player.transform;
             rig.zoomInput = player.GetComponent<PlayerInputReader>();
+            rig.lockFraming = true;
 
             var ascii = go.AddComponent<AsciiCamera>();
             ascii.FocusTarget = player.transform;
@@ -839,7 +840,9 @@ namespace Aelid.EditorTools
             cycle.celestialLight = light;
             cycle.skybox = skybox;
             cycle.nightVolume = nightVolume;
-            cycle.timeOfDay = 9.5f;
+            cycle.timeOfDay = 20.5f;
+            cycle.sunIntensity = 1.85f;
+            cycle.moonColor = new Color(0.75f, 0.86f, 1f);
             cycle.Apply();
             return cycle;
         }
@@ -852,7 +855,15 @@ namespace Aelid.EditorTools
             var ascii = AddComponent<AsciiSettings>(profile, overrideAll: true);
             ascii.intensity.Override(1f);
             ascii.cellSize.Override(8);
-            ascii.exemptAscii.Override(0.8f);
+            ascii.exposure.Override(1.35f);
+            ascii.gamma.Override(1f);
+            ascii.glyphBrightness.Override(1.55f);
+            ascii.backgroundFill.Override(0.018f);
+            ascii.backgroundColor.Override(new Color(0.0035f, 0.005f, 0.009f));
+            ascii.saturation.Override(0.90f);
+            ascii.sparkleDensity.Override(0.016f);
+            ascii.edgeThreshold.Override(0.47f);
+            ascii.exemptAscii.Override(0.86f);
 
             var tonemap = AddComponent<Tonemapping>(profile);
             tonemap.mode.Override(TonemappingMode.Neutral);
@@ -863,8 +874,8 @@ namespace Aelid.EditorTools
             bloom.scatter.Override(0.65f);
 
             var color = AddComponent<ColorAdjustments>(profile);
-            color.saturation.Override(10f);
-            color.contrast.Override(8f);
+            color.saturation.Override(-4f);
+            color.contrast.Override(3f);
 
             var vignette = AddComponent<Vignette>(profile);
             vignette.intensity.Override(0.22f);
@@ -878,19 +889,19 @@ namespace Aelid.EditorTools
             // Night mood comes mostly from cold moonlight and ambient; the grade
             // stays light so firelight keeps its warmth against the blue.
             var ascii = AddComponent<AsciiSettings>(profile);
-            ascii.exposure.Override(3.2f);
+            ascii.exposure.Override(2.4f);
             ascii.backgroundFill.Override(0f);
-            ascii.glyphBrightness.Override(3.0f);
-            ascii.colorNormalize.Override(0.12f);
+            ascii.glyphBrightness.Override(2.5f);
+            ascii.colorNormalize.Override(0.04f);
             // Fireflies: sparse, self-lit, slowly pulsing; HDR so bloom makes them glow.
-            ascii.sparkleColor.Override(new Color(1.7f, 2.5f, 0.7f, 1f));
-            ascii.sparkleDensity.Override(0.012f);
+            ascii.sparkleColor.Override(new Color(1.1f, 1.7f, 1.25f, 1f));
+            ascii.sparkleDensity.Override(0.009f);
             ascii.sparkleSelfLit.Override(1f);
             ascii.sparkleTwinkle.Override(1f);
 
             var color = AddComponent<ColorAdjustments>(profile);
-            color.saturation.Override(-8f);
-            color.colorFilter.Override(new Color(0.93f, 0.96f, 1.06f));
+            color.saturation.Override(-14f);
+            color.colorFilter.Override(new Color(0.96f, 0.99f, 1.04f));
 
             var balance = AddComponent<WhiteBalance>(profile);
             balance.temperature.Override(-8f);

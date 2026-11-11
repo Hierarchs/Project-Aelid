@@ -136,13 +136,13 @@ MonoBehaviour:
     m_Value: 0
   colorFilter:
     m_OverrideState: 1
-    m_Value: {r: 0.93, g: 0.96, b: 1.06, a: 1}
+    m_Value: {r: 0.96, g: 0.99, b: 1.04, a: 1}
   hueShift:
     m_OverrideState: 0
     m_Value: 0
   saturation:
     m_OverrideState: 1
-    m_Value: -8
+    m_Value: -14
 --- !u!114 &6565800839202684587
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -167,7 +167,7 @@ MonoBehaviour:
     m_Value: 1
   exposure:
     m_OverrideState: 1
-    m_Value: 3.2
+    m_Value: 2.4
   contrast:
     m_OverrideState: 0
     m_Value: 1.15
@@ -182,25 +182,28 @@ MonoBehaviour:
     m_Value: 1
   glyphBrightness:
     m_OverrideState: 1
-    m_Value: 3
+    m_Value: 2.5
   backgroundFill:
     m_OverrideState: 1
     m_Value: 0
+  backgroundColor:
+    m_OverrideState: 0
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
   saturation:
     m_OverrideState: 0
     m_Value: 1.1
   colorNormalize:
     m_OverrideState: 1
-    m_Value: 0.12
+    m_Value: 0.04
   colorJitter:
     m_OverrideState: 0
     m_Value: 0.28
   sparkleDensity:
     m_OverrideState: 1
-    m_Value: 0.012
+    m_Value: 0.009
   sparkleColor:
     m_OverrideState: 1
-    m_Value: {r: 1.7, g: 2.5, b: 0.7, a: 1}
+    m_Value: {r: 1.1, g: 1.7, b: 1.25, a: 1}
   sparkleSelfLit:
     m_OverrideState: 1
     m_Value: 1

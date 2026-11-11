@@ -2587,7 +2587,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f63144d9ba33d3e4d9f02562e93360ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aelid.Environment::Aelid.Environment.DayNightCycle
-  timeOfDay: 9.5
+  timeOfDay: 20.5
   dayLengthMinutes: 24
   progressTime: 1
   timeScale: 1
@@ -2624,8 +2624,8 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 8
     m_NumAlphaKeys: 2
-  sunIntensity: 2.2
-  moonColor: {r: 0.58, g: 0.7, b: 1, a: 1}
+  sunIntensity: 1.85
+  moonColor: {r: 0.75, g: 0.86, b: 1, a: 1}
   moonIntensity: 0.85
   ambientSky:
     serializedVersion: 2
@@ -2721,7 +2721,7 @@ MonoBehaviour:
     serializedVersion: 2
     key0: {r: 0.05, g: 0.07, b: 0.13, a: 1}
     key1: {r: 0.22, g: 0.2, b: 0.3, a: 1}
-    key2: {r: 0.85, g: 0.66, b: 0.52, a: 0}
+    key2: {r: 0.57, g: 0.62, b: 0.68, a: 0}
     key3: {r: 0.72, g: 0.82, b: 0.92, a: 0}
     key4: {r: 0.72, g: 0.82, b: 0.92, a: 0}
     key5: {r: 0.88, g: 0.52, b: 0.36, a: 0}
@@ -2761,7 +2761,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 5
-      value: 0.018
+      value: 0.02
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2769,8 +2769,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 6.5
-      value: 0.01
+      time: 6.6
+      value: 0.023
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2778,8 +2778,26 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 7.5
-      value: 0.005
+      time: 7.8
+      value: 0.016
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 9
+      value: 0.008
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 10.5
+      value: 0.004
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -8155,7 +8173,7 @@ MonoBehaviour:
   m_IsGlobal: 1
   priority: 1
   blendDistance: 0
-  weight: 0
+  weight: 1
   sharedProfile: {fileID: 11400000, guid: a653d5eb2e1f7e34da3759ffb6bbac7e, type: 2}
 --- !u!4 &191791255
 Transform:
@@ -16583,7 +16601,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 2
-  m_Color: {r: 1, g: 0.44, b: 0.12, a: 1}
+  m_Color: {r: 1, g: 0.56, b: 0.27, a: 1}
   m_Intensity: 24
   m_Range: 18
   m_SpotAngle: 30
@@ -26373,7 +26391,7 @@ MonoBehaviour:
   intensity: 3.5
   emissiveRenderers:
   - {fileID: 267625279}
-  emission: {r: 2, g: 1, b: 0.28, a: 1}
+  emission: {r: 1.8, g: 0.72, b: 0.2, a: 1}
   dayLevel: 0
 --- !u!65 &631725061
 BoxCollider:
@@ -30570,7 +30588,7 @@ MonoBehaviour:
   intensity: 8
   emissiveRenderers:
   - {fileID: 1222252069}
-  emission: {r: 2.6, g: 1.35, b: 0.35, a: 1}
+  emission: {r: 2.4, g: 1, b: 0.26, a: 1}
   dayLevel: 0
 --- !u!1 &773319264
 GameObject:
@@ -31805,7 +31823,7 @@ MonoBehaviour:
   intensity: 8
   emissiveRenderers:
   - {fileID: 939193212}
-  emission: {r: 2.6, g: 1.35, b: 0.35, a: 1}
+  emission: {r: 2.4, g: 1, b: 0.26, a: 1}
   dayLevel: 0
 --- !u!1 &794367076
 GameObject:
@@ -34863,7 +34881,7 @@ MonoBehaviour:
   intensity: 8
   emissiveRenderers:
   - {fileID: 157420635}
-  emission: {r: 2.6, g: 1.35, b: 0.35, a: 1}
+  emission: {r: 2.4, g: 1, b: 0.26, a: 1}
   dayLevel: 0
 --- !u!1 &886866722
 GameObject:
@@ -37982,7 +38000,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 2
-  m_Color: {r: 1, g: 0.44, b: 0.12, a: 1}
+  m_Color: {r: 1, g: 0.56, b: 0.27, a: 1}
   m_Intensity: 24
   m_Range: 18
   m_SpotAngle: 30
@@ -40043,7 +40061,7 @@ MonoBehaviour:
   intensity: 8
   emissiveRenderers:
   - {fileID: 1623799699}
-  emission: {r: 2.6, g: 1.35, b: 0.35, a: 1}
+  emission: {r: 2.4, g: 1, b: 0.26, a: 1}
   dayLevel: 0
 --- !u!1 &1020393272
 GameObject:
@@ -49120,7 +49138,7 @@ MonoBehaviour:
   intensity: 8
   emissiveRenderers:
   - {fileID: 647994129}
-  emission: {r: 2.6, g: 1.35, b: 0.35, a: 1}
+  emission: {r: 2.4, g: 1, b: 0.26, a: 1}
   dayLevel: 0
 --- !u!1 &1229319980
 GameObject:
@@ -50825,7 +50843,7 @@ MonoBehaviour:
   intensity: 8
   emissiveRenderers:
   - {fileID: 2028919429}
-  emission: {r: 2.6, g: 1.35, b: 0.35, a: 1}
+  emission: {r: 2.4, g: 1, b: 0.26, a: 1}
   dayLevel: 0
 --- !u!1 &1292094763
 GameObject:
@@ -64304,7 +64322,7 @@ MonoBehaviour:
   intensity: 3.5
   emissiveRenderers:
   - {fileID: 628890752}
-  emission: {r: 2, g: 1, b: 0.28, a: 1}
+  emission: {r: 1.8, g: 0.72, b: 0.2, a: 1}
   dayLevel: 0
 --- !u!65 &1653060759
 BoxCollider:
@@ -66374,7 +66392,7 @@ MonoBehaviour:
   intensity: 3.5
   emissiveRenderers:
   - {fileID: 994215277}
-  emission: {r: 2, g: 1, b: 0.28, a: 1}
+  emission: {r: 1.8, g: 0.72, b: 0.2, a: 1}
   dayLevel: 0
 --- !u!65 &1728934606
 BoxCollider:
@@ -68015,7 +68033,7 @@ MonoBehaviour:
   intensity: 3.5
   emissiveRenderers:
   - {fileID: 715699234}
-  emission: {r: 2, g: 1, b: 0.28, a: 1}
+  emission: {r: 1.8, g: 0.72, b: 0.2, a: 1}
   dayLevel: 0
 --- !u!65 &1764329769
 BoxCollider:
@@ -72390,7 +72408,7 @@ MonoBehaviour:
   intensity: 3.5
   emissiveRenderers:
   - {fileID: 1869383058}
-  emission: {r: 2, g: 1, b: 0.28, a: 1}
+  emission: {r: 1.8, g: 0.72, b: 0.2, a: 1}
   dayLevel: 0
 --- !u!65 &1878366796
 BoxCollider:
@@ -78883,6 +78901,7 @@ MonoBehaviour:
   distance: 40
   orthographic: 1
   fieldOfView: 24
+  lockFraming: 1
   viewHalfHeight: 8
   minViewHalfHeight: 5
   maxViewHalfHeight: 13

@@ -58,6 +58,9 @@ namespace Aelid.Environment
         /// <summary>Sun elevation in degrees (negative below the horizon).</summary>
         public float SunElevation { get; private set; }
 
+        public Vector3 MoonDirection { get; private set; }
+        public float MoonVisibility { get; private set; }
+
         public static DayNightCycle Active { get; private set; }
 
         Material m_SkyInstance;
@@ -65,6 +68,7 @@ namespace Aelid.Environment
 
         static readonly int k_SkyExposure = Shader.PropertyToID("_Exposure");
         static readonly int k_SkyTint = Shader.PropertyToID("_SkyTint");
+        static readonly int k_MorningMist = Shader.PropertyToID("_AelidMorningMist");
 
         void Reset() => AssignDefaultCurves();
 
@@ -79,7 +83,10 @@ namespace Aelid.Environment
         void OnDisable()
         {
             if (Active == this)
+            {
                 Active = null;
+                Shader.SetGlobalFloat(k_MorningMist, 0f);
+            }
             if (Application.isPlaying && RenderSettings.skybox == m_SkyInstance && m_SkySource != null)
                 RenderSettings.skybox = m_SkySource;
             DestroySkyInstance();
@@ -120,11 +127,12 @@ namespace Aelid.Environment
             // so midday light comes from behind the camera and lights the faces we see.
             float sunAngle = (Mathf.Repeat(timeOfDay, 24f) - 6f) / 12f * 180f;
             Vector3 towardSun = BodyDirection(sunAngle);
-            Vector3 towardMoon = -towardSun;
+            MoonDirection = -towardSun;
 
             SunElevation = Mathf.Asin(Mathf.Clamp(towardSun.y, -1f, 1f)) * Mathf.Rad2Deg;
             float moonElevation = -SunElevation;
             NightFactor = 1f - Smooth01(-6f, 6f, SunElevation);
+            MoonVisibility = Smooth01(0f, 7f, moonElevation);
 
             if (celestialLight != null)
             {
@@ -138,7 +146,7 @@ namespace Aelid.Environment
                 }
                 else
                 {
-                    celestialLight.transform.rotation = Quaternion.LookRotation(-towardMoon, Vector3.up);
+                    celestialLight.transform.rotation = Quaternion.LookRotation(-MoonDirection, Vector3.up);
                     celestialLight.color = moonColor;
                     celestialLight.intensity = moonIntensity * Smooth01(-1f, 7f, moonElevation);
                 }
@@ -155,6 +163,8 @@ namespace Aelid.Environment
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             if (fogColor != null) RenderSettings.fogColor = fogColor.Evaluate(t01);
             if (fogDensity != null && fogDensity.length > 0) RenderSettings.fogDensity = fogDensity.Evaluate(timeOfDay);
+            float mist = Smooth01(5f, 6.6f, timeOfDay) * (1f - Smooth01(7f, 10.5f, timeOfDay));
+            Shader.SetGlobalFloat(k_MorningMist, mist);
 
             if (skybox != null)
             {
@@ -232,7 +242,7 @@ namespace Aelid.Environment
             fogColor = MakeGradient(
                 (0.00f, new Color(0.05f, 0.07f, 0.13f)),
                 (0.25f, new Color(0.22f, 0.20f, 0.30f)),
-                (0.30f, new Color(0.85f, 0.66f, 0.52f)),
+                (0.30f, new Color(0.57f, 0.62f, 0.68f)),
                 (0.40f, new Color(0.72f, 0.82f, 0.92f)),
                 (0.65f, new Color(0.72f, 0.82f, 0.92f)),
                 (0.76f, new Color(0.88f, 0.52f, 0.36f)),
@@ -241,9 +251,11 @@ namespace Aelid.Environment
 
             fogDensity = new AnimationCurve(
                 new Keyframe(0f, 0.016f),
-                new Keyframe(5f, 0.018f),     // pre-dawn mist
-                new Keyframe(6.5f, 0.010f),
-                new Keyframe(7.5f, 0.005f),
+                new Keyframe(5f, 0.020f),
+                new Keyframe(6.6f, 0.023f),   // mist peaks shortly after sunrise
+                new Keyframe(7.8f, 0.016f),
+                new Keyframe(9f, 0.008f),
+                new Keyframe(10.5f, 0.004f),
                 new Keyframe(16f, 0.004f),
                 new Keyframe(19.5f, 0.010f),
                 new Keyframe(24f, 0.016f));

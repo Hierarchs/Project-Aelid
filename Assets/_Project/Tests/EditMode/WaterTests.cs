@@ -17,7 +17,7 @@ namespace Aelid.Tests
         [SetUp]
         public void SetUp()
         {
-            m_Target = new RenderTexture(1920, 1080, 24);
+            m_Target = new RenderTexture(1537, 901, 24);
             m_CameraObject = new GameObject("Test Game Camera");
             m_Source = m_CameraObject.AddComponent<Camera>();
             m_Source.orthographic = true;
@@ -44,6 +44,7 @@ namespace Aelid.Tests
         public void PointsOnTheSurface_MapToTheSameRow_MirroredColumn()
         {
             Camera mirror = m_Reflection.ReflectionCamera;
+            Assert.AreEqual(m_Source.aspect, mirror.aspect, 1e-6f, "A rounded mirror texture must use the main camera's projection aspect.");
             for (int i = 0; i < 25; i++)
             {
                 var onSurface = new Vector3(-6f + i * 0.5f, Surface, 2f + (i % 5) * 1.5f);

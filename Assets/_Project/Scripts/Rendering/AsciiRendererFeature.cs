@@ -121,6 +121,7 @@ namespace Aelid.Rendering
                 public static readonly int Offset = Shader.PropertyToID("_AsciiOffset");
                 public static readonly int Tone = Shader.PropertyToID("_AsciiTone");
                 public static readonly int Color = Shader.PropertyToID("_AsciiColor");
+                public static readonly int BackgroundColor = Shader.PropertyToID("_AsciiBackgroundColor");
                 public static readonly int Edge = Shader.PropertyToID("_AsciiEdge");
                 public static readonly int Misc = Shader.PropertyToID("_AsciiMisc");
                 public static readonly int OutlineColor = Shader.PropertyToID("_AsciiOutlineColor");
@@ -149,7 +150,7 @@ namespace Aelid.Rendering
             /// <summary>Uniforms shared by all three full-screen passes.</summary>
             sealed class Uniforms
             {
-                public Vector4 cell, source, offset, tone, color, edge, misc, outlineColor, debug, sparkle, sparkle2;
+                public Vector4 cell, source, offset, tone, color, backgroundColor, edge, misc, outlineColor, debug, sparkle, sparkle2;
                 public readonly Vector4[] classParams = new Vector4[AsciiSurfaceLayers.TableSize];
                 public readonly Vector4[] classParams2 = new Vector4[AsciiSurfaceLayers.TableSize];
 
@@ -160,6 +161,7 @@ namespace Aelid.Rendering
                     block.SetVector(Ids.Offset, offset);
                     block.SetVector(Ids.Tone, tone);
                     block.SetVector(Ids.Color, color);
+                    block.SetVector(Ids.BackgroundColor, backgroundColor);
                     block.SetVector(Ids.Edge, edge);
                     block.SetVector(Ids.Misc, misc);
                     block.SetVector(Ids.OutlineColor, outlineColor);
@@ -446,6 +448,7 @@ namespace Aelid.Rendering
                 u.offset = new Vector4(offset.x, offset.y, origin.x, origin.y);
                 u.tone = new Vector4(s.exposure.value, s.contrast.value, s.gamma.value, s.dither.value);
                 u.color = new Vector4(s.glyphBrightness.value, s.backgroundFill.value, s.saturation.value, s.colorNormalize.value);
+                u.backgroundColor = s.backgroundColor.value;
                 u.edge = new Vector4(s.edgeThreshold.value, s.depthEdgeSensitivity.value, s.normalEdgeSensitivity.value, s.edges.value ? 1f : 0f);
                 u.misc = new Vector4(Time.time, s.waterRippleSpeed.value, s.exemptOutline.value, s.intensity.value);
                 u.outlineColor = s.exemptOutlineColor.value;
@@ -460,20 +463,21 @@ namespace Aelid.Rendering
                 u.classParams[(int)AsciiSurfaceClass.Water] = new Vector4(1f, 3f, 0f, 1.2f);
                 u.classParams[(int)AsciiSurfaceClass.Stone] = new Vector4(1f, 4f, 1f, 2.6f); // mix letters like carved text
                 u.classParams[(int)AsciiSurfaceClass.Emissive] = new Vector4(s.emissiveAscii.value, 5f, 0f, 0.5f);
-                u.classParams[(int)AsciiSurfaceClass.Grass] = new Vector4(1f, 6f, 1f, 3.2f); // strong dither: organic blade variety
+                u.classParams[(int)AsciiSurfaceClass.Grass] = new Vector4(1f, 6f, 0f, 3.2f);
                 u.classParams[(int)AsciiSurfaceClass.Wood] = new Vector4(1f, 7f, 1f, 0.6f);
                 u.classParams[AsciiSurfaceLayers.SkyClass] = new Vector4(1f, AsciiSurfaceLayers.SkyClass, 0f, 0.5f);
 
-                // Per-class table 2: x = density floor (min glyph density in shadow), y = sparkle weight.
+                // Per-class table 2: density floor, sparkle weight, patch strength, alternate atlas row.
                 for (int i = 0; i < u.classParams2.Length; i++)
                     u.classParams2[i] = new Vector4(0.25f, 0f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Default] = new Vector4(0.3f, 0f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Foliage] = new Vector4(0.6f, 0.15f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Water] = new Vector4(0.5f, 0f, 0f, 0f); // dark water stays lined
-                u.classParams2[(int)AsciiSurfaceClass.Stone] = new Vector4(0.55f, 0f, 0f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Default] = new Vector4(0.08f, 0f, 0.38f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Exempt] = new Vector4(0.43f, 0f, 0f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Foliage] = new Vector4(0.44f, 0.15f, 0.65f, AsciiGlyphAtlas.FoliageAltRow);
+                u.classParams2[(int)AsciiSurfaceClass.Water] = new Vector4(0.16f, 0f, 0.45f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Stone] = new Vector4(0.46f, 0f, 0.4f, AsciiGlyphAtlas.StoneAltRow);
                 u.classParams2[(int)AsciiSurfaceClass.Emissive] = new Vector4(0.4f, 0f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Grass] = new Vector4(0.65f, 1f, 0f, 0f);
-                u.classParams2[(int)AsciiSurfaceClass.Wood] = new Vector4(0.5f, 0f, 0f, 0f);
+                u.classParams2[(int)AsciiSurfaceClass.Grass] = new Vector4(0.66f, 1f, 0.82f, AsciiGlyphAtlas.GrassAltRow);
+                u.classParams2[(int)AsciiSurfaceClass.Wood] = new Vector4(0.39f, 0f, 0.28f, AsciiGlyphAtlas.StoneAltRow);
                 u.classParams2[AsciiSurfaceLayers.SkyClass] = Vector4.zero;
 
                 Color sparkleColor = s.sparkleColor.value;

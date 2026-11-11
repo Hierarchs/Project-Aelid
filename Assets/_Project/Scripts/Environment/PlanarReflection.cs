@@ -35,6 +35,7 @@ namespace Aelid.Environment
         [Range(0f, 1f)] public float skyBrightness = 0.4f;
 
         static readonly int k_Texture = Shader.PropertyToID("_PlanarReflectionTexture");
+        static readonly int k_MoonDisc = Shader.PropertyToID("_WaterMoonDisc");
 
         Camera m_Camera;
         RenderTexture m_Texture;
@@ -90,6 +91,7 @@ namespace Aelid.Environment
 
             m_Camera.orthographic = src.orthographic;
             m_Camera.orthographicSize = src.orthographicSize;
+            m_Camera.aspect = src.aspect;
             m_Camera.fieldOfView = src.fieldOfView;
             m_Camera.nearClipPlane = src.nearClipPlane;
             m_Camera.farClipPlane = src.farClipPlane;
@@ -110,6 +112,16 @@ namespace Aelid.Environment
             m_Block ??= new MaterialPropertyBlock();
             m_Renderer.GetPropertyBlock(m_Block);
             m_Block.SetTexture(k_Texture, m_Texture);
+            var cycle = DayNightCycle.Active;
+            Vector4 moon = Vector4.zero;
+            if (cycle != null && cycle.MoonVisibility > 0f)
+            {
+                Bounds bounds = m_Renderer.bounds;
+                float span = Mathf.Min(bounds.extents.x, bounds.extents.z);
+                Vector3 center = bounds.center + cycle.MoonDirection * (span * 0.29f);
+                moon = new Vector4(center.x, center.z, span * 0.085f, cycle.MoonVisibility);
+            }
+            m_Block.SetVector(k_MoonDisc, moon);
             m_Renderer.SetPropertyBlock(m_Block);
             return true;
         }

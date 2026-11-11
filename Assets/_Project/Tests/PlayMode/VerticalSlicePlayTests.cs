@@ -139,7 +139,7 @@ namespace Aelid.Tests
         public IEnumerator AsciiSnapping_KeepsOffsetsInsideOneCell()
         {
             Hold(Key.D, Key.W);
-            int cell = AsciiGrid.ResolveCellSize(m_AsciiCamera.Camera.pixelHeight);
+            int cell = AsciiGrid.ResolveCellSize(AsciiGrid.RasterSize(m_AsciiCamera.Camera).y);
             for (int i = 0; i < 90; i++)
             {
                 yield return null;
@@ -148,6 +148,27 @@ namespace Aelid.Tests
                 Assert.That(offset.y, Is.InRange(0, cell - 1));
             }
             Release();
+        }
+
+        [UnityTest]
+        public IEnumerator CameraFraming_IgnoresWheelAndProjectionToggle()
+        {
+            var mouse = InputSystem.AddDevice<Mouse>("Aelid Test Mouse");
+            try
+            {
+                float size = m_Rig.cam.orthographicSize;
+                InputSystem.QueueStateEvent(mouse, new MouseState { scroll = new Vector2(0f, 120f) });
+                Hold(Key.F5);
+                yield return null;
+                Release();
+                yield return new WaitForSeconds(0.4f);
+                Assert.IsTrue(m_Rig.cam.orthographic);
+                Assert.AreEqual(size, m_Rig.cam.orthographicSize);
+            }
+            finally
+            {
+                InputSystem.RemoveDevice(mouse);
+            }
         }
 
         [UnityTest]
@@ -165,10 +186,25 @@ namespace Aelid.Tests
             Assert.Greater(m_DayNight.NightFactor, 0.95f);
             Assert.Less(m_DayNight.celestialLight.intensity, 1.0f, "Moonlight should be dim.");
 
+            var mirror = Object.FindAnyObjectByType<PlanarReflection>();
+            var properties = new MaterialPropertyBlock();
+            var waterRenderer = mirror.GetComponent<Renderer>();
+            int moonId = Shader.PropertyToID("_WaterMoonDisc");
+            Assert.IsTrue(mirror.UpdateReflection());
+            waterRenderer.GetPropertyBlock(properties);
+            Assert.Greater(properties.GetVector(moonId).w, 0.95f, "The moon should reflect at night.");
+
+            m_DayNight.SetTime(7f);
+            float morningFog = RenderSettings.fogDensity;
+
             m_DayNight.SetTime(12f);
             yield return null;
             Assert.Less(m_DayNight.NightFactor, 0.05f);
             Assert.Greater(m_DayNight.celestialLight.intensity, 1.5f, "Noon sun should be bright.");
+            Assert.Greater(morningFog, RenderSettings.fogDensity * 3f, "Morning mist should burn off by noon.");
+            Assert.IsTrue(mirror.UpdateReflection());
+            waterRenderer.GetPropertyBlock(properties);
+            Assert.AreEqual(0f, properties.GetVector(moonId).w, "The moon reflection should fade during the day.");
         }
 
         [UnityTest]

@@ -27,6 +27,7 @@ float4 _AsciiSource;      // x: width, y: height, zw: 1/size
 float4 _AsciiOffset;      // xy: sub-cell offset px (screen right/up), zw: world cell origin
 float4 _AsciiTone;        // x: exposure, y: contrast, z: gamma, w: dither
 float4 _AsciiColor;       // x: glyph brightness, y: background fill, z: saturation, w: color normalize
+float4 _AsciiBackgroundColor;
 float4 _AsciiEdge;        // x: threshold, y: depth sensitivity, z: normal sensitivity, w: enabled
 float4 _AsciiMisc;        // x: time, y: water ripple speed, z: exempt outline, w: intensity
 float4 _AsciiOutlineColor;
@@ -38,7 +39,7 @@ bool AsciiRowsGoDown()
     return _AsciiOrientation.x > 0.5;
 }
 float4 _AsciiClassParams[16]; // per class: x ascii amount, y atlas row, z edges on, w dither scale
-float4 _AsciiClassParams2[16];// per class: x density floor, y sparkle weight
+float4 _AsciiClassParams2[16];// per class: x density floor, y sparkle weight, z patch strength, w alternate atlas row
 float4 _AsciiSparkle;         // rgb: sparkle color (HDR), a: density
 float4 _AsciiSparkle2;        // x: self-lit, y: twinkle, z: color jitter, w: density floor scale
 

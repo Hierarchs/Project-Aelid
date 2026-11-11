@@ -40,11 +40,13 @@ namespace Aelid.EditorTools
             new() { name = "04_night_village", hour = 22.5f, player = new Vector2(1.5f, -3.5f), facing = 0f, zoom = 8f },
             new() { name = "05_night_ruins", hour = 1.0f, player = new Vector2(-30f, 25f), facing = 300f, zoom = 9f },
             new() { name = "06_morning_forest", hour = 7.4f, player = new Vector2(-6f, 30f), facing = 200f, zoom = 9f },
-            new() { name = "07_closeup_player", hour = 11f, player = new Vector2(2f, -7f), facing = 160f, zoom = 5f },
+            new() { name = "07_closeup_player", hour = 11f, player = new Vector2(0f, -12f), facing = 160f, zoom = 5f },
             new() { name = "08_night_camp_meadow", hour = 23.5f, player = new Vector2(12f, 14.6f), facing = 15f, zoom = 7f },
             new() { name = "09_day_camp_meadow", hour = 14f, player = new Vector2(12f, 14.6f), facing = 15f, zoom = 7f },
-            new() { name = "10_night_pond_wading", hour = 23.3f, player = new Vector2(24.5f, -11f), facing = 200f, zoom = 6.5f, wading = true },
+            new() { name = "10_night_pond_wading", hour = 23.3f, player = new Vector2(24.5f, -11f), facing = 200f, zoom = 8f, wading = true },
             new() { name = "11_day_pond_wading", hour = 10.5f, player = new Vector2(24.5f, -11f), facing = 200f, zoom = 6.5f, wading = true },
+            new() { name = "12_nightfall_spawn", hour = 20.5f, player = new Vector2(0f, -6f), facing = 0f, zoom = 8f },
+            new() { name = "13_morning_mist_pond", hour = 7.1f, player = new Vector2(24.5f, -8.5f), facing = 175f, zoom = 8f },
         };
 
         public static string OutputDirectory => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Captures"));
@@ -299,33 +301,45 @@ namespace Aelid.EditorTools
             const int frames = 9;
             int margin = 4 * AsciiGrid.ResolveCellSize(Height);
 
-            // Characters are drawn at full 3D detail by design and rasterize at
-            // sub-pixel offsets; hide them so the test isolates the glyph grid.
+            // Hide the character so the test isolates the world and water.
             var hidden = new List<Renderer>(player.GetComponentsInChildren<Renderer>());
             foreach (var r in hidden) r.enabled = false;
 
-            Pose(player, rig, asciiCamera, dayNight, new Shot { hour = 11f, player = new Vector2(4f, -2f), zoom = 8f });
-            Vector3 baseFocus = player.transform.position + rig.targetOffset;
-            float unitsPerPixel = 2f * cam.orthographicSize / Height;
-            RenderToTextureAndDiscard(cam, rt);
+            var village = new Shot { hour = 11f, player = new Vector2(4f, -2f), zoom = 8f };
+            var moonlitPond = new Shot { hour = 23.3f, player = new Vector2(24.5f, -11f), zoom = 8f };
+            var morningPond = new Shot { hour = 7.1f, player = new Vector2(24.5f, -8.5f), zoom = 8f };
 
             var sb = new StringBuilder();
             sb.AppendLine($"Glyph stability test: {frames} frames at {Width}x{Height}, cell {AsciiGrid.ResolveCellSize(Height)} px.");
             sb.AppendLine("Changed pixels after compensating for the scroll (lower = more stable):");
 
-            var modes = new (string label, bool ascii, bool snap, Vector2Int step)[]
+            var modes = new (string label, bool ascii, bool snap, Vector2Int step, Shot shot, bool followGround)[]
             {
-                ("raw 3D (reference)  ", false, false, new Vector2Int(3, 2)),
-                ("ASCII, snapping OFF ", true, false, new Vector2Int(3, 2)),
-                ("ASCII, snapping ON  ", true, true, new Vector2Int(3, 2)),
-                ("ASCII, snap ON, X only", true, true, new Vector2Int(3, 0)),
-                ("ASCII, snap ON, Y only", true, true, new Vector2Int(0, 2)),
+                ("raw 3D (reference)  ", false, false, new Vector2Int(3, 2), village, false),
+                ("ASCII, snapping OFF ", true, false, new Vector2Int(3, 2), village, false),
+                ("ASCII, snapping ON  ", true, true, new Vector2Int(3, 2), village, false),
+                ("ASCII, snap ON, X only", true, true, new Vector2Int(3, 0), village, false),
+                ("ASCII, snap ON, Y only", true, true, new Vector2Int(0, 2), village, false),
+                ("ASCII, moonlit pond follow", true, true, new Vector2Int(3, 2), moonlitPond, true),
+                ("ASCII, misty pond follow", true, true, new Vector2Int(3, 2), morningPond, true),
             };
 
-            foreach (var (label, ascii, snap, step) in modes)
+            foreach (var (label, ascii, snap, step, shot, followGround) in modes)
             {
                 AsciiRuntimeOverrides.Enabled = ascii;
                 asciiCamera.PixelSnap = snap;
+                Pose(player, rig, asciiCamera, dayNight, shot);
+                Vector3 baseFocus = player.transform.position + rig.targetOffset;
+                float unitsPerPixel = 2f * cam.orthographicSize / Height;
+                Vector3 panUp = rig.transform.up;
+                if (followGround)
+                {
+                    // World-space travel follows the ground rather than the view plane.
+                    Vector3 horizontal = Vector3.ProjectOnPlane(panUp, Vector3.up);
+                    panUp = horizontal / horizontal.sqrMagnitude;
+                }
+                asciiCamera.ApplySnap();
+                RenderToTextureAndDiscard(cam, rt);
                 Color32[] previous = null;
                 Vector2Int previousPixel = default;
                 double sum = 0;
@@ -337,7 +351,7 @@ namespace Aelid.EditorTools
                 {
                     Vector3 focus = baseFocus
                         + rig.transform.right * (step.x * k * unitsPerPixel)
-                        + rig.transform.up * (step.y * k * unitsPerPixel);
+                        + panUp * (step.y * k * unitsPerPixel);
                     rig.SetFocus(focus);
                     Vector2Int pixel = new(
                         Mathf.RoundToInt(Vector3.Dot(rig.transform.position, rig.transform.right) / unitsPerPixel),

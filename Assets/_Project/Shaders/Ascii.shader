@@ -169,6 +169,18 @@ Shader "Hidden/Aelid/Ascii"
                 return ASCII_COL_EDGE_BACK;
             }
 
+            // Continuous variation across patches of cells, sampled on the same
+            // world grid as the glyphs so clumps do not slide with the camera.
+            float PatchDensity(int2 worldCell)
+            {
+                float2 patch = float2(worldCell) / 11.0;
+                int2 corner = int2(floor(patch));
+                float2 t = smoothstep(0.0, 1.0, frac(patch));
+                float lower = lerp(AsciiHash(corner), AsciiHash(corner + int2(1, 0)), t.x);
+                float upper = lerp(AsciiHash(corner + int2(0, 1)), AsciiHash(corner + int2(1, 1)), t.x);
+                return lerp(0.28, 1.17, smoothstep(0.16, 0.80, lerp(lower, upper, t.y)));
+            }
+
             float4 FragSelect(AsciiVaryings input) : SV_Target
             {
                 int2 cell = int2(input.positionCS.xy);
@@ -194,6 +206,8 @@ Shader "Hidden/Aelid/Ascii"
                 float density = lerp(densityFloor * hasLight, 1.0, lum);
 
                 int2 worldCell = AsciiWorldCell(cell);
+                float patch = lerp(1.0, PatchDensity(worldCell), classParams2.z);
+                density *= patch;
                 float noise = AsciiHash(worldCell) - 0.5;
                 density += noise * _AsciiTone.w * classParams.w / ASCII_LEVELS;
 
@@ -228,7 +242,14 @@ Shader "Hidden/Aelid/Ascii"
                 color = max(lerp(l.xxx, color, _AsciiColor.z), 0.0);
                 float normalizeBoost = lerp(1.0, clamp(0.35 / l, 0.25, 6.0), _AsciiColor.w);
                 float jitter = 1.0 + (AsciiHash(worldCell + int2(17, 59)) - 0.5) * 2.0 * _AsciiSparkle2.z;
-                float3 foreground = color * _AsciiColor.x * normalizeBoost * jitter;
+                float3 foreground = color * _AsciiColor.x * normalizeBoost * jitter * lerp(1.0, patch, 0.65);
+                if (surfaceClass == ASCII_CLASS_EXEMPT)
+                {
+                    // Lift the character's strokes in low light while preserving
+                    // bright highlights and the dark gaps between strokes.
+                    float lift = lerp(2.6, 1.0, smoothstep(0.03, 0.4, lumHdr));
+                    foreground = max(foreground * lift, _AsciiBackgroundColor.rgb * 3.0);
+                }
 
                 if (sparkle)
                 {
@@ -241,6 +262,8 @@ Shader "Hidden/Aelid/Ascii"
                 }
 
                 int row = (int)classParams.y;
+                if (classParams2.w > 0.0 && AsciiHash2(worldCell + int2(73, 11)) < 0.5)
+                    row = (int)classParams2.w;
                 return float4(foreground, row * 16 + glyph);
             }
             ENDHLSL
@@ -259,6 +282,7 @@ Shader "Hidden/Aelid/Ascii"
             TEXTURE2D_FLOAT(_AsciiCellColor);
             TEXTURE2D_FLOAT(_AsciiCellGlyph);
             TEXTURE2D(_AsciiGlyphAtlas);
+            float _AelidMorningMist;
 
             int LoadClass(int2 p, int2 size)
             {
@@ -300,7 +324,9 @@ Shader "Hidden/Aelid/Ascii"
                 int2 atlasTexel = int2(col * ASCII_GLYPH + gx, ASCII_ATLAS_SIZE - 1 - (row * ASCII_GLYPH + gy));
                 float ink = LOAD_TEXTURE2D(_AsciiGlyphAtlas, atlasTexel).r;
 
-                float3 background = cellAverage * _AsciiColor.y;
+                // Let the fog already present in the lit scene tint the gaps between glyphs.
+                float backgroundFill = max(_AsciiColor.y, _AelidMorningMist * 0.09);
+                float3 background = max(cellAverage * backgroundFill, _AsciiBackgroundColor.rgb);
                 float3 ascii = lerp(background, glyphData.rgb, ink);
 
                 float3 scene = LOAD_TEXTURE2D(_AsciiSceneColor, qc).rgb;

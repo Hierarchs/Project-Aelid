@@ -40,6 +40,8 @@ namespace Aelid.EditorTools
             new() { name = "05_night_ruins", hour = 1.0f, player = new Vector2(-30f, 25f), facing = 300f, zoom = 9f },
             new() { name = "06_morning_forest", hour = 7.4f, player = new Vector2(-6f, 30f), facing = 200f, zoom = 9f },
             new() { name = "07_closeup_player", hour = 11f, player = new Vector2(2f, -7f), facing = 160f, zoom = 5f },
+            new() { name = "08_night_camp_meadow", hour = 23.5f, player = new Vector2(12f, 14.6f), facing = 15f, zoom = 7f },
+            new() { name = "09_day_camp_meadow", hour = 14f, player = new Vector2(12f, 14.6f), facing = 15f, zoom = 7f },
         };
 
         public static string OutputDirectory => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Captures"));

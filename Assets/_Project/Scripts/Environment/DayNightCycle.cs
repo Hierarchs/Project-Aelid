@@ -38,7 +38,7 @@ namespace Aelid.Environment
 
         [Header("Moon")]
         public Color moonColor = new(0.58f, 0.70f, 1f);
-        public float moonIntensity = 0.75f;
+        public float moonIntensity = 0.85f;
 
         [Header("Ambient & fog (evaluated over 0-24h)")]
         public Gradient ambientSky;
@@ -60,6 +60,9 @@ namespace Aelid.Environment
 
         public static DayNightCycle Active { get; private set; }
 
+        Material m_SkyInstance;
+        Material m_SkySource;
+
         static readonly int k_SkyExposure = Shader.PropertyToID("_Exposure");
         static readonly int k_SkyTint = Shader.PropertyToID("_SkyTint");
 
@@ -77,6 +80,18 @@ namespace Aelid.Environment
         {
             if (Active == this)
                 Active = null;
+            if (Application.isPlaying && RenderSettings.skybox == m_SkyInstance && m_SkySource != null)
+                RenderSettings.skybox = m_SkySource;
+            DestroySkyInstance();
+        }
+
+        void DestroySkyInstance()
+        {
+            if (m_SkyInstance == null)
+                return;
+            if (Application.isPlaying) Destroy(m_SkyInstance);
+            else DestroyImmediate(m_SkyInstance);
+            m_SkyInstance = null;
         }
 
         void Update()
@@ -143,11 +158,18 @@ namespace Aelid.Environment
 
             if (skybox != null)
             {
-                RenderSettings.skybox = skybox;
-                if (skybox.HasProperty(k_SkyExposure))
-                    skybox.SetFloat(k_SkyExposure, Mathf.Lerp(1.1f, 0.08f, NightFactor));
-                if (skybox.HasProperty(k_SkyTint))
-                    skybox.SetColor(k_SkyTint, Color.Lerp(new Color(0.55f, 0.6f, 0.7f), new Color(0.12f, 0.15f, 0.3f), NightFactor));
+                // Animate a runtime copy so the shared material asset is never modified.
+                if (m_SkyInstance == null || m_SkySource != skybox)
+                {
+                    DestroySkyInstance();
+                    m_SkySource = skybox;
+                    m_SkyInstance = new Material(skybox) { name = skybox.name + " (Runtime)", hideFlags = HideFlags.DontSave };
+                }
+                RenderSettings.skybox = Application.isPlaying ? m_SkyInstance : skybox;
+                if (m_SkyInstance.HasProperty(k_SkyExposure))
+                    m_SkyInstance.SetFloat(k_SkyExposure, Mathf.Lerp(1.1f, 0.08f, NightFactor));
+                if (m_SkyInstance.HasProperty(k_SkyTint))
+                    m_SkyInstance.SetColor(k_SkyTint, Color.Lerp(new Color(0.55f, 0.6f, 0.7f), new Color(0.12f, 0.15f, 0.3f), NightFactor));
             }
 
             if (nightVolume != null)
@@ -178,25 +200,26 @@ namespace Aelid.Environment
                 (0.75f, new Color(1.00f, 0.50f, 0.24f)), // 18:00 sunset
                 (1.00f, new Color(1.00f, 0.45f, 0.25f)));
 
+            // Night ambient stays low so fires and lamps form distinct pools of light.
             ambientSky = MakeGradient(
-                (0.00f, new Color(0.14f, 0.18f, 0.34f)),
-                (0.22f, new Color(0.22f, 0.20f, 0.38f)),
+                (0.00f, new Color(0.11f, 0.15f, 0.29f)),
+                (0.22f, new Color(0.20f, 0.18f, 0.35f)),
                 (0.29f, new Color(0.66f, 0.54f, 0.56f)),
                 (0.40f, new Color(0.55f, 0.68f, 0.90f)),
                 (0.65f, new Color(0.55f, 0.68f, 0.90f)),
                 (0.75f, new Color(0.74f, 0.52f, 0.46f)),
-                (0.83f, new Color(0.22f, 0.20f, 0.38f)),
-                (1.00f, new Color(0.14f, 0.18f, 0.34f)));
+                (0.83f, new Color(0.19f, 0.18f, 0.34f)),
+                (1.00f, new Color(0.11f, 0.15f, 0.29f)));
 
             ambientEquator = MakeGradient(
-                (0.00f, new Color(0.08f, 0.10f, 0.20f)),
+                (0.00f, new Color(0.065f, 0.085f, 0.17f)),
                 (0.25f, new Color(0.16f, 0.14f, 0.24f)),
                 (0.30f, new Color(0.60f, 0.44f, 0.34f)),
                 (0.40f, new Color(0.46f, 0.50f, 0.48f)),
                 (0.65f, new Color(0.46f, 0.50f, 0.48f)),
                 (0.75f, new Color(0.66f, 0.42f, 0.30f)),
-                (0.83f, new Color(0.13f, 0.12f, 0.24f)),
-                (1.00f, new Color(0.08f, 0.10f, 0.20f)));
+                (0.83f, new Color(0.11f, 0.10f, 0.21f)),
+                (1.00f, new Color(0.065f, 0.085f, 0.17f)));
 
             ambientGround = MakeGradient(
                 (0.00f, new Color(0.04f, 0.05f, 0.09f)),

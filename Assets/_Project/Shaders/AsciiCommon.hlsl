@@ -11,6 +11,7 @@
 #define ASCII_COL_EDGE_H      11
 #define ASCII_COL_EDGE_SLASH  12
 #define ASCII_COL_EDGE_BACK   13
+#define ASCII_COL_SPARKLE     14
 #define ASCII_CLASS_EXEMPT    1
 #define ASCII_CLASS_WATER     3
 #define ASCII_CLASS_SKY       15
@@ -37,6 +38,9 @@ bool AsciiRowsGoDown()
     return _AsciiOrientation.x > 0.5;
 }
 float4 _AsciiClassParams[16]; // per class: x ascii amount, y atlas row, z edges on, w dither scale
+float4 _AsciiClassParams2[16];// per class: x density floor, y sparkle weight
+float4 _AsciiSparkle;         // rgb: sparkle color (HDR), a: density
+float4 _AsciiSparkle2;        // x: self-lit, y: twinkle, z: color jitter, w: density floor scale
 
 struct AsciiAttributes
 {
@@ -66,6 +70,12 @@ float AsciiHash(int2 p)
     uint2 q = asuint(p) * uint2(1597334677u, 3812015801u);
     uint n = (q.x ^ q.y) * 1597334677u;
     return n * (1.0 / 4294967296.0);
+}
+
+// Second independent hash stream for the same cell.
+float AsciiHash2(int2 p)
+{
+    return AsciiHash(p * int2(7919, 104729) + int2(31337, 271));
 }
 
 // Cell index anchored to the world (via the snapped camera's cell origin).

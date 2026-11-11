@@ -61,11 +61,12 @@ StoneSample EvaluateStone(float3 positionWS, half3 normalWS)
     float3 weights = pow(abs(normalWS), 4.0);
     weights /= max(weights.x + weights.y + weights.z, 1e-5);
     // All three projections use metres; cliffs do not stretch an XZ-only texture.
-    float3 texture = StonePlane(p.zy) * weights.x
-                   + StonePlane(p.xz) * weights.y
-                   + StonePlane(p.xy) * weights.z;
-    float joint = texture.x;
-    float mineral = texture.y;
+    // ('texture' is a reserved word in HLSL; DX12 refuses it as a variable name.)
+    float3 planes = StonePlane(p.zy) * weights.x
+                  + StonePlane(p.xz) * weights.y
+                  + StonePlane(p.xy) * weights.z;
+    float joint = planes.x;
+    float mineral = planes.y;
 
     // Wavy bedding planes share world height, but mainly affect steep natural faces.
     float layerCoordinate = p.y * _LayerScale + (StoneNoise(p.xz * 0.34) - 0.5) * 0.65;
@@ -78,7 +79,7 @@ StoneSample EvaluateStone(float3 positionWS, half3 normalWS)
 
     half3 rock = _BaseColor.rgb * lerp(0.76, 1.23, mineral);
     rock = lerp(rock, rock * _MineralTint.rgb, smoothstep(0.45, 0.80, mineral) * 0.5);
-    rock *= 1.0 + (texture.z - 0.5) * _GrainStrength;
+    rock *= 1.0 + (planes.z - 0.5) * _GrainStrength;
     rock *= 1.0 + (sediment - 0.5) * layers * 0.22;
     rock *= 1.0 - joint * _JointStrength * 0.55 - bedding * layers * 0.28;
 

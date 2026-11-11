@@ -13,7 +13,7 @@ An open-world fantasy MMORPG in **Unity 6 (URP)**: a fully 3D low-poly world ren
 - Day/night cycle with morning mist, cold moonlight, and warm firelight
 - Generated test area: village, wheat field, forest, pond, hilltop ruins
 - Water: planar reflections, a rippling moon reflection, ripple rings around wading characters, depth-blended shorelines, line-glyph water
-- Automated edit-mode and play-mode tests
+- 30 automated tests (20 edit mode + 10 play mode)
 
 Not built yet: weather, combat, enemies, multiplayer (see the roadmap in the architecture doc).
 

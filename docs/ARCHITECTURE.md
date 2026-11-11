@@ -176,8 +176,8 @@ checked separately before treating the new paving as validated in game.
 
 ## Tests and tools
 
-- **Edit mode (EDIT_COUNT):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry; plus ruin paving geometry and repeatability, and ground materials and layout export.
-- **Play mode (PLAY_COUNT):** loads the real scene and drives it with virtual input. Covers movement, sprinting, camera follow and framing lock, snap offsets, wading, morning mist, the night-only moon reflection, and the ASCII toggle. Any logged error fails the run.
+- **Edit mode (20):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry; plus ruin paving geometry and repeatability, and ground materials and layout export.
+- **Play mode (10):** loads the real scene and drives it with virtual input. Covers movement, sprinting, camera follow and framing lock, snap offsets, wading, morning mist, the night-only moon reflection, and the ASCII toggle. Any logged error fails the run.
 - **Captures:** 13 review shots (ASCII and raw), including morning mist and moonlight at the pond, plus the glyph atlas preview, reflection textures, and the stability report. Water time is frozen so shots are repeatable.
 - **Debug views:** `AsciiRuntimeOverrides.DebugView` shows scene passthrough, cell color, surface class, glyph color, or the atlas tiled across the screen (useful for orientation checks).
 

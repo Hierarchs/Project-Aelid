@@ -25,7 +25,7 @@ Gameplay does not reference Rendering, and Rendering does not reference Gameplay
 lit 3D frame ─┬─► [1] Surface ID   redraw tagged renderers → R8 class mask (full res)
               ├─► [2] Reduce       per cell: average color, class, depth, normal (cell res, MRT)
               │       [3] Select   per cell: glyph = density ramp + dither, or line glyph on edges
-              └─► [4] Composite    per pixel: draw glyph; Exempt pixels stay 3D; outline; sub-cell shift
+              └─► [4] Composite    per pixel: blend glyphs by surface class; outline; sub-cell shift
                                     → becomes the camera color for post-processing
 ```
 
@@ -36,7 +36,7 @@ lit 3D frame ─┬─► [1] Surface ID   redraw tagged renderers → R8 class 
 | Class | Glyph vocabulary (dark → bright) | Shadow density floor | ASCII amount | Use |
 |---|---|---|---|---|
 | Default | ` .-:=+%*@#` | 0.30 | 100% | dirt, sand, snow, misc |
-| Exempt | (none) | n/a | 0% (configurable) | players, important enemies: full 3D with a dark rim |
+| Exempt | Same as Default | 0.25 | 80% in the vertical slice | player character with a dark silhouette outline |
 | Foliage | ` .,;o8*&♣♠` | 0.60 | 100% | trees, bushes |
 | Water | ` .-~=░≈≋▒▓` + animated ripple | 0.15 | 100% | water |
 | Stone | ` .:oOS8QMB` (thin letters) | 0.55 | 100% | rocks, cliffs, ruins |
@@ -66,9 +66,9 @@ This is exact for the orthographic camera, which is the default. In perspective 
 
 `IsometricCameraRig`: fixed pitch (52°) and yaw (0° = looking north, Asciilands style), orthographic by default, smooth follow with slight look-ahead, and mouse-wheel zoom between 5 and 13 m half-height. Perspective is a toggle (F5, narrow FOV) for comparison.
 
-## Player (working, placeholder art)
+## Player (working)
 
-`PlayerInputReader` (Input System, actions defined in code) produces a `PlayerIntent` struct, and `PlayerController` maps it into camera-relative world space. `PlayerMotor` (CharacterController) consumes only `PlayerIntent` and `dt`, with no input or camera access. That is deliberate: the same motor can run on a server for authoritative validation and on the client for prediction. The character is built from boxes and animated by `ProceduralHumanoidAnimator` (limb swing, bob, lean, breathing). Swap in a rigged model and Animator later without touching the motor.
+`PlayerInputReader` (Input System, actions defined in code) produces a `PlayerIntent` struct, and `PlayerController` maps it into camera-relative world space. `PlayerMotor` (CharacterController) consumes only `PlayerIntent` and `dt`, with no input or camera access. That is deliberate: the same motor can run on a server for authoritative validation and on the client for prediction. The swordsman's FBX has six pivots driven by `ProceduralHumanoidAnimator` for limb swing, bob, lean, and breathing. The editable model is in `Art/Blender/Aelid Swordsman.blend`.
 
 ## Day/night (working)
 
@@ -81,7 +81,7 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 - **`PlanarReflection`** (on the water): a hidden `CameraType.Reflection` camera mirrors the game camera across the surface and renders the world above it into a half-resolution HDR texture. It uses an ordinary rotation, not a mirrored view matrix, so no culling inversion is needed; the shader samples at `u = 1 - u`. An oblique near plane clips everything below the water. Because the game camera moves in whole ASCII cells, the mirror camera moves in whole texels and reflections stay glyph-stable. The open sky reflects at `skyBrightness` (0.4), so water stays dark and reflected objects stand out. The ASCII pass skips this camera.
 - **`Water.shader`** (transparent queue, reads camera depth and opaque textures): bed refraction with depth absorption; planar reflection with stylised Fresnel; four wave trains plus ripple rings distorting both; sun/moon glints; a thin, lapping foam line; a seamless fade into the bed at the waterline; and fog. Its property defaults are the look, because the builder resets `Water_Pond.mat` to them on every build.
 - **`WaterRipples`**: a 16-slot global ring buffer (`_WaterRipples`, `_WaterTime`) that anything can emit into. **`WaterRippleEmitter`** on a character emits a splash on entering, one ring per stride, and soft rings while standing. **`WaterBody`** answers "is this point in water, and at what height?"
-- The surface-ID pass draws transparent renderers after opaques, so water over a wading character's legs becomes water glyphs while the body above stays 3D.
+- The surface-ID pass draws transparent renderers after opaques, so water over a wading character's legs uses water glyphs and the exposed body uses the character blend.
 
 ## Tests and tools
 

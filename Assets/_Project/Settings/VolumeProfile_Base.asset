@@ -152,7 +152,7 @@ MonoBehaviour:
     m_Value: 0.9
   exemptAscii:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 0.8
   emissiveAscii:
     m_OverrideState: 1
     m_Value: 0.45

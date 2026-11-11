@@ -742,73 +742,36 @@ namespace Aelid.EditorTools
             player.AddComponent<AsciiSurface>().SurfaceClass = AsciiSurfaceClass.Exempt;
             player.AddComponent<WaterRippleEmitter>();
 
-            var tunic = Mat("Player_Tunic", new Color(0.64f, 0.12f, 0.10f));
-            var pants = Mat("Player_Pants", new Color(0.26f, 0.20f, 0.15f));
-            var skin = Mat("Player_Skin", new Color(0.86f, 0.66f, 0.52f));
-            var hair = Mat("Player_Hair", new Color(0.16f, 0.11f, 0.08f));
-            var leather = Mat("Player_Leather", new Color(0.36f, 0.24f, 0.14f));
-            var steel = Mat("Player_Steel", new Color(0.78f, 0.80f, 0.84f), 0.75f, 0.85f);
-            var cape = Mat("Player_Cape", new Color(0.14f, 0.16f, 0.30f));
-
-            var visual = new GameObject("Visual").transform;
-            visual.SetParent(player.transform, false);
-
-            Transform Pivot(string name, Transform parent, Vector3 localPos)
-            {
-                var t = new GameObject(name).transform;
-                t.SetParent(parent, false);
-                t.localPosition = localPos;
-                return t;
-            }
-
-            var body = Pivot("Body", visual, new Vector3(0, 0.92f, 0));
-            Part("Torso", body, tunic, new Vector3(0, 0.33f, 0), new Vector3(0.52f, 0.62f, 0.30f));
-            Part("Belt", body, leather, new Vector3(0, 0.05f, 0), new Vector3(0.55f, 0.1f, 0.33f));
-            Part("Cape", body, cape, new Vector3(0, 0.25f, -0.19f), new Vector3(0.5f, 0.8f, 0.05f));
-            var head = Pivot("Head", body, new Vector3(0, 0.68f, 0));
-            Part("Face", head, skin, new Vector3(0, 0.16f, 0), new Vector3(0.30f, 0.32f, 0.30f));
-            Part("Hair", head, hair, new Vector3(0, 0.30f, -0.03f), new Vector3(0.33f, 0.1f, 0.34f));
-            Part("HairBack", head, hair, new Vector3(0, 0.18f, -0.14f), new Vector3(0.33f, 0.26f, 0.06f));
-
-            var leftArm = Pivot("Left Arm", body, new Vector3(-0.34f, 0.58f, 0));
-            Part("Sleeve", leftArm, tunic, new Vector3(0, -0.26f, 0), new Vector3(0.15f, 0.55f, 0.16f));
-            Part("Hand", leftArm, skin, new Vector3(0, -0.58f, 0), new Vector3(0.12f, 0.12f, 0.12f));
-            var rightArm = Pivot("Right Arm", body, new Vector3(0.34f, 0.58f, 0));
-            Part("Sleeve", rightArm, tunic, new Vector3(0, -0.26f, 0), new Vector3(0.15f, 0.55f, 0.16f));
-            Part("Hand", rightArm, skin, new Vector3(0, -0.58f, 0), new Vector3(0.12f, 0.12f, 0.12f));
-            Part("Sword Grip", rightArm, leather, new Vector3(0, -0.6f, 0.08f), new Vector3(0.05f, 0.05f, 0.22f));
-            Part("Sword Guard", rightArm, steel, new Vector3(0, -0.6f, 0.2f), new Vector3(0.24f, 0.05f, 0.05f));
-            Part("Sword Blade", rightArm, steel, new Vector3(0, -0.6f, 0.62f), new Vector3(0.07f, 0.03f, 0.8f));
-
-            var leftLeg = Pivot("Left Leg", visual, new Vector3(-0.13f, 0.92f, 0));
-            Part("Thigh", leftLeg, pants, new Vector3(0, -0.4f, 0), new Vector3(0.18f, 0.8f, 0.2f));
-            Part("Boot", leftLeg, leather, new Vector3(0, -0.84f, 0.04f), new Vector3(0.2f, 0.16f, 0.28f));
-            var rightLeg = Pivot("Right Leg", visual, new Vector3(0.13f, 0.92f, 0));
-            Part("Thigh", rightLeg, pants, new Vector3(0, -0.4f, 0), new Vector3(0.18f, 0.8f, 0.2f));
-            Part("Boot", rightLeg, leather, new Vector3(0, -0.84f, 0.04f), new Vector3(0.2f, 0.16f, 0.28f));
-
-            var anim = visual.gameObject.AddComponent<ProceduralHumanoidAnimator>();
-            anim.motor = player.GetComponent<PlayerMotor>();
-            anim.body = body;
-            anim.head = head;
-            anim.leftArm = leftArm;
-            anim.rightArm = rightArm;
-            anim.leftLeg = leftLeg;
-            anim.rightLeg = rightLeg;
+            var visual = new GameObject("Visual");
+            visual.transform.SetParent(player.transform, false);
+            var animator = visual.AddComponent<ProceduralHumanoidAnimator>();
+            animator.motor = player.GetComponent<PlayerMotor>();
+            AttachSwordsman(animator);
 
             player.GetComponent<AsciiSurface>().Apply();
+            foreach (var renderer in visual.GetComponentsInChildren<MeshRenderer>())
+                PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
             return player;
         }
 
-        static void Part(string name, Transform parent, Material material, Vector3 localPos, Vector3 size)
+        static void AttachSwordsman(ProceduralHumanoidAnimator animator)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name;
-            Object.DestroyImmediate(go.GetComponent<BoxCollider>());
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = localPos;
-            go.transform.localScale = size;
-            go.GetComponent<MeshRenderer>().sharedMaterial = material;
+            const string modelPath = Root + "/Art/Characters/Swordsman/Swordsman.fbx";
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+            if (model == null)
+                throw new System.InvalidOperationException($"Missing player model at {modelPath}.");
+
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(model, animator.transform);
+            var root = instance.transform;
+            animator.body = root.Find("Body");
+            animator.head = root.Find("Body/Head");
+            animator.leftArm = root.Find("Body/Left Arm");
+            animator.rightArm = root.Find("Body/Right Arm");
+            animator.leftLeg = root.Find("Left Leg");
+            animator.rightLeg = root.Find("Right Leg");
+            if (animator.body == null || animator.head == null || animator.leftArm == null ||
+                animator.rightArm == null || animator.leftLeg == null || animator.rightLeg == null)
+                throw new System.InvalidOperationException($"Missing locomotion pivots in {modelPath}.");
         }
 
         // ------------------------------------------------------------------ camera & environment
@@ -885,11 +848,11 @@ namespace Aelid.EditorTools
         {
             var profile = NewProfile("VolumeProfile_Base");
             // Override every ASCII parameter so the look never depends on the
-            // project's default volume profile. Values are the code defaults:
-            // black background, glyph colour carries the light, dense textures.
+            // project's default volume profile.
             var ascii = AddComponent<AsciiSettings>(profile, overrideAll: true);
             ascii.intensity.Override(1f);
             ascii.cellSize.Override(8);
+            ascii.exemptAscii.Override(0.8f);
 
             var tonemap = AddComponent<Tonemapping>(profile);
             tonemap.mode.Override(TonemappingMode.Neutral);

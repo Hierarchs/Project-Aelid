@@ -1,0 +1,19 @@
+{
+    "name": "Aelid.Debugging",
+    "rootNamespace": "Aelid.Debugging",
+    "references": [
+        "Unity.InputSystem",
+        "Aelid.Rendering",
+        "Aelid.Environment",
+        "Aelid.Gameplay"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,8 @@
+﻿{
+    "name": "Aelid.Foliage.Editor",
+    "rootNamespace": "",
+    "references": [ "Aelid.Foliage" ],
+    "includePlatforms": [ "Editor" ],
+    "excludePlatforms": [],
+    "autoReferenced": true
+}

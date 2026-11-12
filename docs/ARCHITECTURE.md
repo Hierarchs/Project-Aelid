@@ -8,9 +8,10 @@ Each module is its own assembly, so compile-time dependencies stay explicit and 
 
 | Assembly | Folder | Depends on | Responsibility |
 |---|---|---|---|
-| `Aelid.Rendering` | `Scripts/Rendering` | URP | Hybrid ASCII renderer feature, glyph atlas, surface classes, glyph-stable camera snapping |
-| `Aelid.Environment` | `Scripts/Environment` | URP | Day/night cycle, night lights, flicker, water (reflection, ripples, water bodies) |
+| `Aelid.Rendering` | `Scripts/Rendering` | URP | Hybrid ASCII renderer feature, volumetric fog, glyph atlas, surface classes, glyph-stable camera snapping |
+| `Aelid.Environment` | `Scripts/Environment` | URP | Day/night cycle, cloud shadows, night lights, flicker, water (reflection, ripples, water bodies) |
 | `Aelid.Gameplay` | `Scripts/Gameplay` | Input System | Input → intent → motor, procedural animation, isometric camera rig |
+| `Aelid.World` | `Scripts/World` | (engine only) | Region rule tables, region outlines, keep-clear zones, deterministic region generator |
 | `Aelid.Debugging` | `Scripts/Debugging` | all of the above | Dev HUD and hotkeys |
 | `Aelid.Editor` | `Scripts/Editor` | all | Scene builder, project setup, capture and stability tool |
 | `Aelid.Tests.*` | `Tests/` | all | Edit-mode and play-mode tests |
@@ -72,7 +73,74 @@ The snapper uses the URP raster dimensions so its cell grid matches the shader w
 
 ## Day/night (working)
 
-`DayNightCycle` moves one directional light between the sun and moon. The handover happens at the horizon, where both are dark. It also drives trilight ambient, fog, the procedural skybox, and the Night volume weight. Cool morning mist peaks shortly after sunrise and fades by midmorning. The fog color gradient and density curve are editable in the inspector. `NightLight` fades lamps and windows in at dusk, and `FlickerLight` animates firelight.
+`DayNightCycle` moves one directional light between the sun and moon. The handover happens at the horizon, where both are dark. It also drives trilight ambient, fog, the procedural skybox, and the Night volume weight. Violet light and mist build around dawn and fade by midmorning. **Dawn Tint** and **Dawn Fog Density** are editable in the inspector alongside the fog color gradient and density curve. `NightLight` fades lamps and windows in at dusk, and `FlickerLight` animates firelight.
+
+## Cloud shadows (prototype)
+
+`CloudShadows` (on the Environment object) generates a seamlessly tiling cloud
+texture and sets it as the celestial light's URP light cookie. Clouds therefore dim
+only direct sun or moon light; ambient light, emissives, lamps and fires are
+untouched, and cast shadows soften under a cloud as they should. The cookie is
+projected in world space, so shade stays locked to the ground: the stability test
+still measures 0.00% shimmer. In play mode the pattern drifts with **Wind**
+(metres per second over the ground). It holds still in edit mode, so captures are
+repeatable.
+
+Settings: **Coverage** (the shaded fraction; the weather hook), **Opacity** (how much
+direct light a cloud blocks, 0.75), **Softness** (edge width), **Tile Size** (100 m;
+clouds are about a quarter of that) and **Seed**. Larger clouds were tried: at the
+gameplay zoom a frame then sits inside one cloud and the scene just looks darker.
+Ground, Stone, Water and the foliage wind shader declare `_LIGHT_COOKIES`; URP Lit
+already does. Edit the foliage shader through `URPFoliageWind.shader.txt` too.
+
+In the ASCII view the effect is subtler than in 3D. The grass glyphs' world-anchored
+patches are at a similar scale, so clouds read as darker zones crossing the glyph
+texture rather than distinct shapes. On average, direct sunlight drops by about
+coverage × opacity (30% at the defaults). **Aelid → Setup → Add Cloud Shadows to Open
+Scene** adds it to a scene without a rebuild; full builds include it.
+
+## Volumetric fog and light shafts (prototype)
+
+`VolumetricFogFeature` (RenderGraph, registered by `ProjectSetup` on both renderers)
+runs after transparents, so the ASCII pass quantises the fogged image. Reflection and
+preview cameras are skipped.
+
+1. **Fog March** (half resolution): each view ray is clipped to the fog layer below
+   **Top** and marched in fixed steps (32). Each step samples the main-light shadow map,
+   so tree crowns and buildings cut the fog into shafts. It also samples the cloud
+   cookie, so cloud shadows fall through the mist as diagonal rays at low sun. Sky
+   ambient and up to 8 visible point or spot lights add light, so lanterns, windows and
+   fires get halos. Scattering uses a Henyey-Greenstein phase.
+2. **Fog Composite** (full resolution): a depth-aware 2×2 upsample, blended as
+   colour × transmittance + in-scattered light.
+
+Settings live in the `VolumetricFog` volume component, so the day and night profiles
+blend it. The medium is a thin haze below Top plus ground mist that thins with height
+above **Base Height**, so it pools in hollows and around the pond. Optional noise
+drifts with **Wind** in play mode. Morning mist adds density through DayNightCycle's
+global `_AelidMorningMist`, so dawn needs no profile of its own. **Max Opacity** caps
+how much the fog may hide (day 0.3, night 0.6), keeping characters readable.
+
+Lit lights burn the fog off around them. Each local light clears a pocket of
+**Clearing Radius** × its range (0.5), by up to **Light Clearing** (0.85). The pocket
+is scaled by how brightly the light is lit, so lamps that NightLight switches off
+by day clear nothing. The campfire and the village lamps stand in clear air, with
+fog and halos at the pocket's edge. `VolumetricFogFeature.Clearing` mirrors the
+shader's curve for tests.
+
+Glyph stability: march samples sit mid-step with no per-pixel or per-frame noise, and
+the half-resolution grid lines up with the snapped ASCII cells. The stability test
+still reads 0.00% with snapping on. An earlier world-hashed march offset produced
+visible blocks and was removed.
+
+Tuning findings: from the 52° top-down camera, midday shafts are barely visible. Haze
+above the canopy is evenly lit and only veils the scene, so the day profile is a light
+haze in hollows. Shafts show best at low sun and at night: cloud-shadow rays through
+the morning mist, tree-shadow streaks, and halos. The built-in distance fog that
+DayNightCycle drives is still on and stacks with this, mostly at dawn. Removing or
+reducing it is a separate look decision. Neither pass has been GPU-profiled.
+**Aelid → Setup → Add Volumetric Fog to Slice Profiles** applies the fog to existing
+profiles in place; full builds include it.
 
 ## Water (working)
 
@@ -83,7 +151,7 @@ The water renders as lit 3D, and the ASCII pass then turns it into horizontal li
 - **`WaterRipples`**: a 16-slot global ring buffer (`_WaterRipples`, `_WaterTime`) that anything can emit into. **`WaterRippleEmitter`** on a character emits a splash on entering, one ring per stride, and soft rings while standing. **`WaterBody`** answers "is this point in water, and at what height?"
 - The surface-ID pass draws transparent renderers after opaques, so water over a wading character's legs uses water glyphs and the exposed body uses the character blend.
 
-## Cliff and stone surfaces (Unity validation pending)
+## Cliff and stone surfaces
 
 `Aelid/Stone` adds world-space surface texture to `Terrain_Rock`, `Rock`, `Stone`,
 `Ruin_Stone`, and `Ruin_Moss` while retaining their existing base colours. Three
@@ -114,11 +182,11 @@ Validation: 18 DXC shader entry/variant compilations passed against the pinned U
 headers, covering forward/clustered lighting, cascaded and screen-space shadows,
 instancing, depth, relief normals, octahedral normals, and punctual shadows. The
 material setup compiled against Unity's managed assemblies, and managed checks
-confirmed all five saved presets. GPU cost, Unity import, gameplay tests, visual
-captures, and camera stability remain unverified because the cloud editor has no
-license. The three-projection fracture calculation has not been profiled.
+confirmed all five saved presets. The local Unity editor verified the layered cliff
+material in the saved scene and a full rebuild. The three-projection fracture
+calculation has not been profiled.
 
-## Grass and dirt surfaces (Unity validation pending)
+## Grass and dirt surfaces
 
 `Aelid/Ground` replaces flat colours on the three existing grass/dirt materials.
 It evaluates texture in world XZ coordinates without requiring mesh UVs: broad
@@ -152,8 +220,84 @@ unchanged. The additional ID draws and procedural texture cost are not profiled.
 Validation: 26 DXC entry/variant compilations passed against the pinned URP
 headers, including the changed ASCII shader; ground setup/tests compile against
 Unity's managed assemblies; the managed layout export test and generated-layout
-comparison passed. Unity import, gameplay tests, captures, and the camera-motion
-stability measurement remain pending because the cloud editor has no license.
+comparison passed. The local Unity editor verified the ground surface ID pass in
+the saved scene and a full rebuild. The path shoulders are visible in the dawn
+captures.
+
+## Region generation (prototype)
+
+Wild vegetation and rocks come from **regions**, modelled on the Region Editor
+that Bethesda used to populate Oblivion's Cyrodiil: an outline drawn on the world,
+plus a rule table saying what grows inside it. Everything a region places is baked
+into the scene as ordinary prefab instances under the region's `Generated` child,
+so the result can be hand-edited, and a server can load the same layout.
+
+- **`RegionRuleSet`** (asset, `World/Regions/*.asset`): rules run top to bottom.
+  Each rule has prefab *variants* (like SpeedTree seeds), density, footprint radius,
+  clustering, slope and height limits, sink, size/yaw/tilt variance, conform-to-slope,
+  an *Is A Tree* flag, and an optional parent. A child rule spawns in a ring of
+  *Radius From Parent* around each placed parent: ferns and leaf litter under oaks,
+  mushrooms on fallen logs, rubble around boulders. *Patchiness* is an Aelid
+  addition that modulates density with broad noise to make glades and drifts.
+- **`RegionArea`** (component): outline, edge fall-off (density fades in from the
+  border), priority, and override. Higher priority generates first and claims ground.
+  An overriding region suppresses lower-priority regions inside it, crossfading over
+  its fall-off band.
+- **`RegionExclusion`** (component): keep-clear circles and capsule paths. The slice
+  builder adds them for the village, pond, ruins, camp, field, roads, and on every
+  hand-placed landmark and prop, so generation works around hand-made content.
+- **`RegionGenerator`**: pure and deterministic. Top-level rules split the region into
+  a world-anchored grid of 2 × radius blocks, and each block rolls density once.
+  Every block and parent slot has its own hashed random stream, keyed by rule name,
+  so moving a corner or reordering rules does not reshuffle the rest. Candidates then
+  pass clustering, the outline and fall-off, overrides, keep-clear zones, slope and
+  height, and footprint overlap. Two trees need `(rA + rB) × Tree Spacing`; a child
+  only needs to clear its own parent's radius.
+- **Editor:** **Aelid → World → Generate Regions / Clear Generated Objects**, or the
+  buttons on any `RegionArea` (outline corners are draggable in the Scene view).
+  Generate always rebuilds every region, because they share ground. **Aelid → World →
+  Reset Slice Region Rules** restores the code defaults; otherwise scene rebuilds
+  keep Inspector tuning. **Aelid → World → Install Slice Regions in Open Scene**
+  (batch: `VerticalSliceBuilder.InstallRegionsFromCommandLine`) swaps the old
+  `Trees`/`Rocks`/`Bushes` scatter for regions without a full rebuild, leaving the rest
+  of the scene alone. That is how the current `VerticalSlice.unity` got its regions.
+
+The slice has three regions. **Northwood** (north and west, override, 10 m fall-off)
+is the oak forest: groves with ferns, litter and mushrooms, rare ancient oaks,
+deadfall, understory bushes, fern beds and mossy rocks. **Heath** (the whole map,
+lowest priority) is open country: clustered copses, flowering bushes, boulders with
+rubble, wildflower drifts and tall grass. **Highlands** (the whole map, height-gated)
+adds faceted crag boulders with scree, slabs on slopes, brambles and windswept oaks
+on the rising rim. It replaces the earlier random scatter of blob trees, bushes and
+rocks; the crag boulders reuse those rock meshes and the Stone shader preset.
+
+Every tree in the slice is one of the four Oak Grove oaks (Broadcrown, Splitfork,
+Windlean, Ancient), either a hand-placed landmark or a generated `Forest_Oak_*`
+prefab. The old procedural pine and blob-oak meshes and materials are gone.
+
+Result (2026-11-11): 1,182 objects: Highlands 368, Northwood 370, Heath 444. That
+includes 109 oaks, against 230 blob trees before, plus understory, deadfall, rocks,
+flowers and grass that the old scatter did not have. Each Generate logs, for every
+rule, the number placed out of the candidates tried and why the rest were dropped
+(outline, fall-off, override, keep-clear, no ground, slope, height, overlap). That is
+the first place to look when a rule places too little.
+
+Limits: footprints are circles, so long logs use most of their half-length as
+radius. Generate replaces every generated object, so hand-edit only objects outside
+`Generated`, or move them out first. Oblivion also painted ground textures under
+objects and spawned grass at runtime from ground textures; neither is built here.
+
+Validation: nine edit-mode generator tests: determinism, the density/radius count,
+slope and height limits, child rings, no overlaps with crown spacing, edge fall-off,
+keep-clear zones, override, and clustering. One play-mode scene test checks that the
+regions are generated and that nothing is placed in the village. Review captures of
+the forest, rim and heath were rendered in batch mode.
+
+## Broken Cloister
+
+The prefab northeast of the pond uses the 38-piece Broken Cloister layout from
+the modular ruin kit. Its stone paving and masonry have mesh colliders. Ivy uses
+the foliage glyphs, and the stonework uses the stone glyphs.
 
 ## Ruins paving (Unity validation pending)
 
@@ -176,8 +320,8 @@ checked separately before treating the new paving as validated in game.
 
 ## Tests and tools
 
-- **Edit mode (20):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry; plus ruin paving geometry and repeatability, and ground materials and layout export.
-- **Play mode (10):** loads the real scene and drives it with virtual input. Covers movement, sprinting, camera follow and framing lock, snap offsets, wading, morning mist, the night-only moon reflection, and the ASCII toggle. Any logged error fails the run.
+- **Edit mode (47):** glyph ramps are monotonic, atlas layout, rendering-layer tagging, cell-size scaling, snap math over 200 random positions, reflection mirror math, the reflection camera's setup, and ripple expiry; plus ruin paving geometry and repeatability, ground materials and layout export, the region generator, cloud shadows (tiling, coverage, opacity, cookie assignment), and volumetric fog (shader compiles, phase normalisation, light clearing, off by default, renderer and profile setup).
+- **Play mode (11):** loads the real scene and drives it with virtual input. Covers movement, sprinting, camera follow and framing lock, snap offsets, wading, morning mist, the night-only moon reflection, the ASCII toggle, and generated regions. Any logged error fails the run.
 - **Captures:** 13 review shots (ASCII and raw), including morning mist and moonlight at the pond, plus the glyph atlas preview, reflection textures, and the stability report. Water time is frozen so shots are repeatable.
 - **Debug views:** `AsciiRuntimeOverrides.DebugView` shows scene passthrough, cell color, surface class, glyph color, or the atlas tiled across the screen (useful for orientation checks).
 

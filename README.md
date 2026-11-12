@@ -10,8 +10,8 @@ An open-world fantasy MMORPG in **Unity 6 (URP)**: a fully 3D low-poly world ren
 - Hybrid ASCII renderer (URP RenderGraph feature): a midnight-blue background, clumped grass strokes, mixed stone lettering, restrained water lines, and an outlined player silhouette
 - Fixed-angle isometric follow camera with a locked zoom and world-aligned glyphs
 - Playable low-poly swordsman with procedural idle, walk, and run animation
-- Day/night cycle with morning mist, cold moonlight, and warm firelight
-- Generated test area: village, wheat field, forest, pond, hilltop ruins
+- Day/night cycle with violet dawn mist, cold moonlight, and warm firelight
+- Generated test area with a village, wheat field, oak forest, pond, hilltop ruins, and the Broken Cloister
 - Water: planar reflections, a rippling moon reflection, ripple rings around wading characters, depth-blended shorelines, line-glyph water
 - 30 automated tests (20 edit mode + 10 play mode)
 
@@ -30,6 +30,7 @@ Not built yet: weather, combat, enemies, multiplayer (see the roadmap in the arc
 | F2 / F3 | Glyph density finer / coarser |
 | F4 | Toggle glyph snapping (shows the shimmer it prevents) |
 | F6 | Switch between the current ASCII look and the clean baseline |
+| F7 | Toggle shape fitting (on by default) |
 | T | Fast time (×60) |
 | [ / ] | Time −1 h / +1 h |
 | H | Toggle the developer HUD |
@@ -66,6 +67,6 @@ UNITY="/c/Program Files/Unity/Hub/Editor/6000.6.8f1/Editor/Unity.exe"
 ```
 
 The baseline capture writes matched 1920 × 1080 day and night PNGs and a
-24-frame daylight pan to `Captures/AsciiBaseline/`. Use F6 in Play Mode to
-compare both looks interactively. The general review capture is also available
-under the Editor's **Aelid** menu.
+24-frame daylight pan to `Captures/AsciiBaseline/` with shape fitting off.
+Use F6 in Play Mode to compare both presets interactively. The general review
+capture is also available under the Editor's **Aelid** menu.

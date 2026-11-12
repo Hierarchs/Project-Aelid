@@ -55,10 +55,11 @@ Shader "Aelid/Water"
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
-            #pragma multi_compile_fog
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
             #pragma multi_compile_instancing
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -108,7 +109,6 @@ Shader "Aelid/Water"
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
-                float fogFactor : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -119,7 +119,6 @@ Shader "Aelid/Water"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 output.positionCS = TransformWorldToHClip(output.positionWS);
-                output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
             }
 
@@ -197,6 +196,9 @@ Shader "Aelid/Water"
                 float3 bed = SampleSceneColor(refractUV);
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
+                #if defined(_LIGHT_COOKIES)
+                    mainLight.color *= SampleMainLightCookie(positionWS); // cloud shadows
+                #endif
                 float3 light = mainLight.color * mainLight.shadowAttenuation;
                 float3 ambient = SampleSH(float3(0.0, 1.0, 0.0));
                 float3 body = _DeepColor.rgb * (ambient + light * 0.35);
@@ -236,10 +238,9 @@ Shader "Aelid/Water"
                 foam = saturate(foam + crest * 0.9);
                 color = lerp(color, _FoamColor.rgb * (ambient + light), foam * _FoamColor.a);
 
-                // Fade into the untouched bed at the waterline: no hard edge.
+                color = MixFog(color, InitializeInputDataFog(float4(input.positionWS, 1), 0));
+                // The opaque scene colour already includes fog.
                 color = lerp(SampleSceneColor(screenUV), color, saturate(depth / 0.04));
-
-                color = MixFog(color, input.fogFactor);
                 return half4(color, 1.0);
             }
             ENDHLSL

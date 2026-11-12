@@ -7,7 +7,8 @@
         "Unity.InputSystem",
         "Aelid.Rendering",
         "Aelid.Gameplay",
-        "Aelid.Environment"
+        "Aelid.Environment",
+        "Aelid.World"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

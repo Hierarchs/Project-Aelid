@@ -11,6 +11,7 @@ namespace Aelid.Debugging
     ///   F1  toggle ASCII          F2/F3  glyph density -/+
     ///   F4  toggle glyph snapping F5     toggle projection when framing is unlocked
     ///   F6  compare the clean ASCII baseline
+    ///   F7  toggle ASCII shape fitting
     ///   T   fast time (x60)       [ / ]  time -1h / +1h
     ///   H   show or hide this panel
     /// </summary>
@@ -41,6 +42,7 @@ namespace Aelid.Debugging
             if (kb.f5Key.wasPressedThisFrame && cameraRig != null && !cameraRig.lockFraming)
                 cameraRig.orthographic = !cameraRig.orthographic;
             if (kb.f6Key.wasPressedThisFrame) AsciiRuntimeOverrides.CleanBaseline = !AsciiRuntimeOverrides.CleanBaseline;
+            if (kb.f7Key.wasPressedThisFrame) AsciiRuntimeOverrides.FitShapes = !AsciiRuntimeOverrides.FitShapes;
             if (kb.hKey.wasPressedThisFrame) m_Visible = !m_Visible;
 
             if (dayNight != null)
@@ -74,8 +76,8 @@ namespace Aelid.Debugging
                 $"ASCII {(AsciiRuntimeOverrides.Enabled ? "on" : "off")}  {(AsciiRuntimeOverrides.CleanBaseline ? "clean" : "current")}  " +
                 $"cell {cell}px  snap {(asciiCamera != null && asciiCamera.PixelSnap ? "on" : "off")}  " +
                 $"{(cameraRig != null && cameraRig.orthographic ? "ortho" : "persp")}\n" +
-                $"Speed {(player != null ? player.PlanarSpeed : 0f):0.0} m/s\n" +
-                "<color=#aaaaaa>WASD move  Shift run\nF1 ascii  F2/F3 density  F4 snap  F6 clean baseline\nT fast time  [ ] hour  H toggle HUD</color>";
+                $"Speed {(player != null ? player.PlanarSpeed : 0f):0.0} m/s  shape fitting {(AsciiRuntimeOverrides.FitShapes ? "on" : "off")}\n" +
+                "<color=#aaaaaa>WASD move  Shift run\nF1 ASCII  F2/F3 density  F4 snap\nF6 clean baseline  F7 shape fitting\nT fast time  [ ] hour  H toggle HUD</color>";
 
             var rect = new Rect(12, 12, 420, 140);
             GUI.color = new Color(0f, 0f, 0f, 0.55f);

@@ -37,29 +37,22 @@ namespace Aelid.EditorTools
             if (asciiShader == null || idShader == null)
                 Debug.LogError("[Aelid] ASCII shaders not found. Check Assets/_Project/Shaders for compile errors.");
 
+            var fogShader = Shader.Find("Hidden/Aelid/VolumetricFog");
+            if (fogShader == null)
+                Debug.LogError("[Aelid] Volumetric fog shader not found. Check Assets/_Project/Shaders for compile errors.");
+
             foreach (string path in k_RendererPaths)
             {
                 var data = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(path);
                 if (data == null) continue;
 
-                var feature = data.rendererFeatures.OfType<AsciiRendererFeature>().FirstOrDefault();
-                if (feature == null)
-                {
-                    feature = ScriptableObject.CreateInstance<AsciiRendererFeature>();
-                    feature.name = "Aelid ASCII";
-                    AssetDatabase.AddObjectToAsset(feature, data);
-                    AssetDatabase.TryGetGUIDAndLocalFileIdentifier(feature, out string _, out long localId);
+                // The fog pass runs after transparents, before the ASCII pass, whatever the list order.
+                var fog = EnsureFeature<VolumetricFogFeature>(data, "Aelid Volumetric Fog");
+                fog.settings.shader = fogShader;
+                fog.SetActive(true);
+                EditorUtility.SetDirty(fog);
 
-                    var so = new SerializedObject(data);
-                    var features = so.FindProperty("m_RendererFeatures");
-                    var map = so.FindProperty("m_RendererFeatureMap");
-                    features.arraySize++;
-                    features.GetArrayElementAtIndex(features.arraySize - 1).objectReferenceValue = feature;
-                    map.arraySize++;
-                    map.GetArrayElementAtIndex(map.arraySize - 1).longValue = localId;
-                    so.ApplyModifiedPropertiesWithoutUndo();
-                }
-
+                var feature = EnsureFeature<AsciiRendererFeature>(data, "Aelid ASCII");
                 feature.settings.asciiShader = asciiShader;
                 feature.settings.surfaceIdShader = idShader;
                 feature.SetActive(true);
@@ -69,6 +62,28 @@ namespace Aelid.EditorTools
 
             PlayerSettings.productName = "Aelid";
             AssetDatabase.SaveAssets();
+        }
+
+        static T EnsureFeature<T>(UniversalRendererData data, string name) where T : ScriptableRendererFeature
+        {
+            var feature = data.rendererFeatures.OfType<T>().FirstOrDefault();
+            if (feature != null)
+                return feature;
+
+            feature = ScriptableObject.CreateInstance<T>();
+            feature.name = name;
+            AssetDatabase.AddObjectToAsset(feature, data);
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(feature, out string _, out long localId);
+
+            var so = new SerializedObject(data);
+            var features = so.FindProperty("m_RendererFeatures");
+            var map = so.FindProperty("m_RendererFeatureMap");
+            features.arraySize++;
+            features.GetArrayElementAtIndex(features.arraySize - 1).objectReferenceValue = feature;
+            map.arraySize++;
+            map.GetArrayElementAtIndex(map.arraySize - 1).longValue = localId;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return feature;
         }
     }
 }

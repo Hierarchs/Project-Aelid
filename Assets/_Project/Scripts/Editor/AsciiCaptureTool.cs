@@ -106,6 +106,7 @@ namespace Aelid.EditorTools
             bool previousAsync = ShaderUtil.allowAsyncCompilation;
             bool previousEnabled = AsciiRuntimeOverrides.Enabled;
             bool previousClean = AsciiRuntimeOverrides.CleanBaseline;
+            bool previousFitShapes = AsciiRuntimeOverrides.FitShapes;
             var previousDebug = AsciiRuntimeOverrides.DebugView;
             int previousCellOffset = AsciiRuntimeOverrides.CellSizeOffset;
             bool previousSnap = asciiCamera.PixelSnap;
@@ -116,6 +117,7 @@ namespace Aelid.EditorTools
             {
                 ShaderUtil.allowAsyncCompilation = false;
                 AsciiRuntimeOverrides.Enabled = true;
+                AsciiRuntimeOverrides.FitShapes = false;
                 AsciiRuntimeOverrides.DebugView = AsciiDebugView.None;
                 AsciiRuntimeOverrides.CellSizeOffset = 0;
                 asciiCamera.PixelSnap = true;
@@ -155,6 +157,7 @@ namespace Aelid.EditorTools
                 asciiCamera.PixelSnap = previousSnap;
                 AsciiRuntimeOverrides.Enabled = previousEnabled;
                 AsciiRuntimeOverrides.CleanBaseline = previousClean;
+                AsciiRuntimeOverrides.FitShapes = previousFitShapes;
                 AsciiRuntimeOverrides.DebugView = previousDebug;
                 AsciiRuntimeOverrides.CellSizeOffset = previousCellOffset;
                 ShaderUtil.allowAsyncCompilation = previousAsync;

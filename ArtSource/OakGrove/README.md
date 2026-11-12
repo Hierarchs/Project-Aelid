@@ -15,7 +15,12 @@ The Blender source stays outside `Assets` so Unity imports the supplied FBXs
 without also converting the source scene. Paths in the original notes refer to
 the archive layout; use the locations above in this repository.
 
-These assets have not been placed in the game scene or wired to Unity materials.
-The notes describe the remaining alpha-clipped foliage material, vertex-color
-wind, shadow/depth, and ASCII surface-pass integration. In-game appearance and
-performance still require Unity validation.
+The Vertical Slice uses the four oak models throughout **World → Trees**.
+Four individual landmarks sit under **World → Oak Grove Trees**. Broadcrown
+stands by the camp, Windlean by the pond, Splitfork by the ruins, and Ancient
+at the forest edge.
+
+The tree FBXs map to [Unity materials](../../Assets/_Project/Art/Environment/OakGrove/Materials/)
+with vertex-color wind. The leaves use the cutout atlas for color, shadows,
+depth, and ASCII surface coverage. Bark uses the Wood glyphs and leaves use
+the Foliage glyphs.

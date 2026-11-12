@@ -13,8 +13,13 @@
 #define ASCII_COL_EDGE_BACK   13
 #define ASCII_COL_SPARKLE     14
 #define ASCII_CLASS_EXEMPT    1
+#define ASCII_CLASS_FOLIAGE   2
 #define ASCII_CLASS_WATER     3
+#define ASCII_CLASS_EMISSIVE  5
 #define ASCII_CLASS_SKY       15
+// Codes beyond the 16x16 atlas select procedural half-blocks in raster order.
+#define ASCII_SPLIT_X        256
+#define ASCII_SPLIT_Y        257
 
 // All passes use integer pixel addressing (Load), so they never depend on UV
 // conventions or RT padding. Whether pixel row 0 is the top or the bottom of
@@ -31,7 +36,7 @@ float4 _AsciiBackgroundColor;
 float4 _AsciiEdge;        // x: threshold, y: depth sensitivity, z: normal sensitivity, w: enabled
 float4 _AsciiMisc;        // x: time, y: water ripple speed, z: exempt outline, w: intensity
 float4 _AsciiOutlineColor;
-float4 _AsciiDebug;       // x: debug view (AsciiDebugView)
+float4 _AsciiDebug;       // x: debug view (AsciiDebugView), y: shape fitting enabled
 float4 _AsciiOrientation; // x: 1 when pixel row 0 is the top of the screen, 0 when it is the bottom
 
 bool AsciiRowsGoDown()
@@ -63,6 +68,16 @@ AsciiVaryings AsciiVert(AsciiAttributes input)
 float AsciiLuminance(float3 c)
 {
     return dot(c, float3(0.2126, 0.7152, 0.0722));
+}
+
+bool AsciiFitsSurface(int surfaceClass)
+{
+    return surfaceClass != ASCII_CLASS_EXEMPT && surfaceClass != ASCII_CLASS_WATER && surfaceClass != ASCII_CLASS_EMISSIVE;
+}
+
+float AsciiRelativeDepth(float a, float b)
+{
+    return abs(a - b) / max(min(a, b), 1e-3);
 }
 
 // Integer hash -> [0,1). Stable for a given world cell.

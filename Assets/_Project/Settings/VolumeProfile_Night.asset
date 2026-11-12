@@ -1,5 +1,75 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6750474282071583541
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff0baff312704a97bd3cd7a9261cab01, type: 3}
+  m_Name: VolumetricFog
+  m_EditorClassIdentifier: Aelid.Rendering::Aelid.Rendering.VolumetricFog
+  active: 1
+  intensity:
+    m_OverrideState: 0
+    m_Value: 0
+  density:
+    m_OverrideState: 1
+    m_Value: 0.004
+  heightDensity:
+    m_OverrideState: 1
+    m_Value: 0.06
+  baseHeight:
+    m_OverrideState: 0
+    m_Value: -1
+  heightFalloff:
+    m_OverrideState: 1
+    m_Value: 3.5
+  top:
+    m_OverrideState: 0
+    m_Value: 16
+  morningMistDensity:
+    m_OverrideState: 0
+    m_Value: 0.12
+  noise:
+    m_OverrideState: 0
+    m_Value: 0.35
+  noiseScale:
+    m_OverrideState: 0
+    m_Value: 14
+  wind:
+    m_OverrideState: 0
+    m_Value: {x: 0.5, y: 0.25}
+  tint:
+    m_OverrideState: 1
+    m_Value: {r: 0.8, g: 0.87, b: 1, a: 1}
+  anisotropy:
+    m_OverrideState: 0
+    m_Value: 0.3
+  sunScattering:
+    m_OverrideState: 1
+    m_Value: 2
+  ambientScattering:
+    m_OverrideState: 1
+    m_Value: 0.5
+  localLightScattering:
+    m_OverrideState: 1
+    m_Value: 0.35
+  lightClearing:
+    m_OverrideState: 0
+    m_Value: 0.85
+  clearingRadius:
+    m_OverrideState: 0
+    m_Value: 0.5
+  maxOpacity:
+    m_OverrideState: 1
+    m_Value: 0.6
+  steps:
+    m_OverrideState: 0
+    m_Value: 24
 --- !u!114 &-5093590393601245483
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -96,6 +166,7 @@ MonoBehaviour:
   - {fileID: 15981539776278922}
   - {fileID: 6109287674925318858}
   - {fileID: -2514240676195428930}
+  - {fileID: -6750474282071583541}
 --- !u!114 &15981539776278922
 MonoBehaviour:
   m_ObjectHideFlags: 3

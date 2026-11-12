@@ -47,6 +47,11 @@ namespace Aelid.Environment
         public Gradient fogColor;
         public AnimationCurve fogDensity;
 
+        [Header("Dawn")]
+        public Color dawnTint = new(0.49f, 0.31f, 0.65f);
+        [Tooltip("Fog density at the peak of the morning mist.")]
+        [Min(0f)] public float dawnFogDensity = 0.015f;
+
         [Header("Sky & post")]
         public Material skybox;
         [Tooltip("Volume whose weight follows the night factor (cold grading, vignette).")]
@@ -154,16 +159,18 @@ namespace Aelid.Environment
                 RenderSettings.sun = celestialLight;
             }
 
+            float dawn = Smooth01(4.8f, 6.1f, timeOfDay) * (1f - Smooth01(6.6f, 9.1f, timeOfDay));
+            float mist = Smooth01(5f, 6.6f, timeOfDay) * (1f - Smooth01(7f, 10.5f, timeOfDay));
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            if (ambientSky != null) RenderSettings.ambientSkyColor = ambientSky.Evaluate(t01);
-            if (ambientEquator != null) RenderSettings.ambientEquatorColor = ambientEquator.Evaluate(t01);
-            if (ambientGround != null) RenderSettings.ambientGroundColor = ambientGround.Evaluate(t01);
+            if (ambientSky != null) RenderSettings.ambientSkyColor = TintAtDawn(ambientSky.Evaluate(t01), 0.65f * dawn);
+            if (ambientEquator != null) RenderSettings.ambientEquatorColor = TintAtDawn(ambientEquator.Evaluate(t01), 0.5f * dawn);
+            if (ambientGround != null) RenderSettings.ambientGroundColor = TintAtDawn(ambientGround.Evaluate(t01), 0.35f * dawn);
 
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            if (fogColor != null) RenderSettings.fogColor = fogColor.Evaluate(t01);
-            if (fogDensity != null && fogDensity.length > 0) RenderSettings.fogDensity = fogDensity.Evaluate(timeOfDay);
-            float mist = Smooth01(5f, 6.6f, timeOfDay) * (1f - Smooth01(7f, 10.5f, timeOfDay));
+            if (fogColor != null) RenderSettings.fogColor = Color.Lerp(fogColor.Evaluate(t01), dawnTint, dawn);
+            if (fogDensity != null && fogDensity.length > 0)
+                RenderSettings.fogDensity = Mathf.Lerp(fogDensity.Evaluate(timeOfDay), dawnFogDensity, mist);
             Shader.SetGlobalFloat(k_MorningMist, mist);
 
             if (skybox != null)
@@ -179,7 +186,10 @@ namespace Aelid.Environment
                 if (m_SkyInstance.HasProperty(k_SkyExposure))
                     m_SkyInstance.SetFloat(k_SkyExposure, Mathf.Lerp(1.1f, 0.08f, NightFactor));
                 if (m_SkyInstance.HasProperty(k_SkyTint))
-                    m_SkyInstance.SetColor(k_SkyTint, Color.Lerp(new Color(0.55f, 0.6f, 0.7f), new Color(0.12f, 0.15f, 0.3f), NightFactor));
+                {
+                    Color skyTint = Color.Lerp(new Color(0.55f, 0.6f, 0.7f), new Color(0.12f, 0.15f, 0.3f), NightFactor);
+                    m_SkyInstance.SetColor(k_SkyTint, TintAtDawn(skyTint, dawn));
+                }
             }
 
             if (nightVolume != null)
@@ -196,6 +206,13 @@ namespace Aelid.Environment
         }
 
         static float Smooth01(float a, float b, float x) => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(a, b, x));
+
+        Color TintAtDawn(Color color, float amount)
+        {
+            Color tint = dawnTint * (color.maxColorComponent / Mathf.Max(dawnTint.maxColorComponent, 0.001f));
+            tint.a = color.a;
+            return Color.Lerp(color, tint, amount);
+        }
 
         /// <summary>Oblivion-bright days, Berserk-cold nights.</summary>
         public void AssignDefaultCurves()

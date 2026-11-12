@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Collections.Generic;
 using Aelid.Environment;
 using Aelid.Gameplay;
 using Aelid.Rendering;
+using Aelid.World;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -79,6 +81,31 @@ namespace Aelid.Tests
             Assert.IsNotNull(m_DayNight, "Day/night cycle");
             Assert.IsTrue(m_Rig.cam.orthographic, "Default camera is the fixed isometric (orthographic) view.");
             yield return new WaitForSeconds(0.5f);
+        }
+
+        [UnityTest]
+        public IEnumerator Scene_RegionsFillTheWildsAndKeepTheVillageClear()
+        {
+            var areas = new List<RegionArea>();
+            foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects())
+                areas.AddRange(root.GetComponentsInChildren<RegionArea>());
+            Assert.GreaterOrEqual(areas.Count, 3, "Northwood, Heath and Highlands");
+
+            int generated = 0;
+            foreach (var area in areas)
+            {
+                var root = area.GeneratedRoot;
+                Assert.IsNotNull(root, $"{area.name} has not been generated.");
+                foreach (Transform group in root)
+                    foreach (Transform item in group)
+                    {
+                        generated++;
+                        var xz = new Vector2(item.position.x, item.position.z);
+                        Assert.Greater(xz.magnitude, 19f, $"{area.name}/{group.name} placed {item.name} inside the village.");
+                    }
+            }
+            Assert.Greater(generated, 500);
+            yield return null;
         }
 
         [UnityTest]

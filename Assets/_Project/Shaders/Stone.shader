@@ -40,8 +40,7 @@ Shader "Aelid/Stone"
             float4 positionCS : SV_POSITION;
             float3 positionWS : TEXCOORD0;
             half3 normalWS : TEXCOORD1;
-            half fogFactor : TEXCOORD2;
-            float4 shadowCoord : TEXCOORD3;
+            float4 shadowCoord : TEXCOORD2;
             UNITY_VERTEX_INPUT_INSTANCE_ID
             UNITY_VERTEX_OUTPUT_STEREO
         };
@@ -55,7 +54,6 @@ Shader "Aelid/Stone"
             output.positionCS = position.positionCS;
             output.positionWS = position.positionWS;
             output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-            output.fogFactor = ComputeFogFactor(position.positionCS.z);
             output.shadowCoord = GetShadowCoord(position);
             return output;
         }
@@ -70,10 +68,11 @@ Shader "Aelid/Stone"
             #pragma vertex StoneVert
             #pragma fragment StoneFrag
             #pragma multi_compile_instancing
-            #pragma multi_compile_fog
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
 
@@ -104,7 +103,7 @@ Shader "Aelid/Stone"
                 data.vertexLighting = VertexLighting(input.positionWS, data.normalWS);
                 data.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 half4 color = UniversalFragmentPBR(data, surface);
-                return half4(MixFog(color.rgb, input.fogFactor), 1);
+                return half4(MixFog(color.rgb, InitializeInputDataFog(float4(input.positionWS, 1), 0)), 1);
             }
             ENDHLSL
         }

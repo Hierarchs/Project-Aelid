@@ -16,6 +16,12 @@ namespace Aelid.Rendering
         /// <summary>Added to the volume's cell size (density). 0 = no change.</summary>
         public static int CellSizeOffset;
 
+        /// <summary>Fit two-color cells at strong boundaries and group glyphs within surfaces.</summary>
+        public static bool FitShapes = true;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetShapeFitting() => FitShapes = true;
+
         /// <summary>Diagnostic output of the composite pass.</summary>
         public static AsciiDebugView DebugView = AsciiDebugView.None;
 
@@ -35,5 +41,6 @@ namespace Aelid.Rendering
         SurfaceClass = 3,     // per-pixel class, color coded
         GlyphColor = 4,       // per-cell glyph color as solid blocks
         GlyphAtlas = 5,       // tiles the whole atlas over the screen (orientation check)
+        CellSplits = 6,      // left/right in green, top/bottom in blue
     }
 }

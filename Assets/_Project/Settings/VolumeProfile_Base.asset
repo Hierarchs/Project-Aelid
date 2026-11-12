@@ -140,6 +140,7 @@ MonoBehaviour:
   - {fileID: 2013703263640513142}
   - {fileID: -8415155412835486556}
   - {fileID: 4942700956727068065}
+  - {fileID: 5138540228469404227}
 --- !u!114 &2013703263640513142
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -218,6 +219,76 @@ MonoBehaviour:
   rounded:
     m_OverrideState: 0
     m_Value: 0
+--- !u!114 &5138540228469404227
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff0baff312704a97bd3cd7a9261cab01, type: 3}
+  m_Name: VolumetricFog
+  m_EditorClassIdentifier: Aelid.Rendering::Aelid.Rendering.VolumetricFog
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  density:
+    m_OverrideState: 1
+    m_Value: 0.001
+  heightDensity:
+    m_OverrideState: 1
+    m_Value: 0.012
+  baseHeight:
+    m_OverrideState: 1
+    m_Value: -1
+  heightFalloff:
+    m_OverrideState: 1
+    m_Value: 4
+  top:
+    m_OverrideState: 1
+    m_Value: 14
+  morningMistDensity:
+    m_OverrideState: 1
+    m_Value: 0.045
+  noise:
+    m_OverrideState: 1
+    m_Value: 0.25
+  noiseScale:
+    m_OverrideState: 1
+    m_Value: 14
+  wind:
+    m_OverrideState: 1
+    m_Value: {x: 0.5, y: 0.25}
+  tint:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 0.97, b: 0.92, a: 1}
+  anisotropy:
+    m_OverrideState: 1
+    m_Value: 0.3
+  sunScattering:
+    m_OverrideState: 1
+    m_Value: 0.8
+  ambientScattering:
+    m_OverrideState: 1
+    m_Value: 0.35
+  localLightScattering:
+    m_OverrideState: 1
+    m_Value: 0.35
+  lightClearing:
+    m_OverrideState: 1
+    m_Value: 0.85
+  clearingRadius:
+    m_OverrideState: 1
+    m_Value: 0.5
+  maxOpacity:
+    m_OverrideState: 1
+    m_Value: 0.3
+  steps:
+    m_OverrideState: 1
+    m_Value: 32
 --- !u!114 &7840369269109457088
 MonoBehaviour:
   m_ObjectHideFlags: 3

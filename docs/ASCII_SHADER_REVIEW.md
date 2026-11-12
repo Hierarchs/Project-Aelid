@@ -40,6 +40,28 @@ Grass clumps and stone lettering read more consistently in the clean captures.
 Several pillar faces lose definition with depth edges alone, and the player is
 still hard to pick out at night. Both modes stayed stable in this fixed-zoom pan.
 
+## Asciicker cell fitting
+
+Shape fitting is on by default. F7 toggles it independently of the F6 clean
+baseline. The shader adapts Asciicker's horizontal and vertical two-color fit
+to the snapped Unity cell grid. A cell gets a half-block when four
+probes agree on a strong boundary and the split continues into a neighboring
+cell. The two colors come from the lit scene on each side. Exempt surfaces,
+water and emissive surfaces use their usual glyph selection.
+
+The mode also averages compatible neighboring cells and chooses alternate glyph
+rows using the existing world-anchored patches. Foliage outlines require a depth
+break that continues beyond a single cell, which quiets small gaps in canopies.
+Use F6 with F7 to compare against the clean baseline at the same light and
+camera position.
+
+The matched Unity captures in `Captures/ShapeFitting/` show fewer lines inside
+the oak crown and more consistent lettering on the ruin pillars. The fixed-zoom
+oak pan stayed stable with the mode on. The player still has low contrast in
+the moonlit ruins.
+
+[Asciicker attribution and license](third-party/asciicker-MIT.txt)
+
 ## Proposed next work
 
 1. Preserve larger lighting/color shapes through gentle grouping or filtering

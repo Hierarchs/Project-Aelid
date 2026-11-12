@@ -22,11 +22,12 @@ Shader "OblivionFoliage/URP Foliage Wind"
 
     SubShader
     {
-        Tags { "RenderType"="TransparentCutout" "Queue"="AlphaTest" "RenderPipeline"="UniversalPipeline" "UniversalMaterialType"="Lit" }
+        Tags { "RenderType"="TransparentCutout" "Queue"="AlphaTest" "RenderPipeline"="UniversalPipeline" "UniversalMaterialType"="Lit" "AelidSurfaceId"="Custom" }
         Cull [_Cull]
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
         #include "FoliageWind.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
@@ -72,6 +73,34 @@ Shader "OblivionFoliage/URP Foliage Wind"
             #endif
             return c;
         }
+
+        struct DepthVaryings
+        {
+            float4 positionCS : SV_POSITION;
+            float2 uv : TEXCOORD0;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
+            UNITY_VERTEX_OUTPUT_STEREO
+        };
+
+        DepthVaryings DepthVert(Attributes v)
+        {
+            DepthVaryings o = (DepthVaryings)0;
+            UNITY_SETUP_INSTANCE_ID(v);
+            UNITY_TRANSFER_INSTANCE_ID(v, o);
+            UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+            float3 normalWS;
+            o.positionCS = TransformWorldToHClip(WindWS(v, normalWS));
+            o.uv = TRANSFORM_TEX(v.uv, _BaseMap);
+            return o;
+        }
+
+        void ClipDepth(DepthVaryings i)
+        {
+            SampleAlbedo(i.uv);
+            #if defined(LOD_FADE_CROSSFADE)
+                LODFadeCrossFade(i.positionCS);
+            #endif
+        }
         ENDHLSL
 
         Pass
@@ -90,12 +119,12 @@ Shader "OblivionFoliage/URP Foliage Wind"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile _ _FORWARD_PLUS _CLUSTER_LIGHT_LOOP
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile _ LOD_FADE_CROSSFADE
-            #pragma multi_compile_fog
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
             #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 
             struct Varyings
             {
@@ -103,7 +132,6 @@ Shader "OblivionFoliage/URP Foliage Wind"
                 float2 uv         : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
                 float3 normalWS   : TEXCOORD2;
-                float  fogCoord   : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -120,7 +148,6 @@ Shader "OblivionFoliage/URP Foliage Wind"
                 o.normalWS = nWS;
                 o.positionCS = TransformWorldToHClip(posWS);
                 o.uv = TRANSFORM_TEX(v.uv, _BaseMap);
-                o.fogCoord = ComputeFogFactor(o.positionCS.z);
                 return o;
             }
 
@@ -140,7 +167,7 @@ Shader "OblivionFoliage/URP Foliage Wind"
                 inputData.normalWS = NormalizeNormalPerPixel(i.normalWS);
                 inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(i.positionWS);
                 inputData.shadowCoord = TransformWorldToShadowCoord(i.positionWS);
-                inputData.fogCoord = i.fogCoord;
+                inputData.fogCoord = InitializeInputDataFog(float4(i.positionWS, 1), 0);
                 inputData.bakedGI = SampleSH(inputData.normalWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.positionCS);
                 inputData.shadowMask = half4(1, 1, 1, 1);
@@ -157,6 +184,9 @@ Shader "OblivionFoliage/URP Foliage Wind"
 
                 // Soft backlight so leaves glow when the sun is behind them.
                 Light mainLight = GetMainLight(inputData.shadowCoord);
+                #if defined(_LIGHT_COOKIES)
+                    mainLight.color *= SampleMainLightCookie(inputData.positionWS); // cloud shadows
+                #endif
                 half back = saturate(dot(-mainLight.direction, inputData.viewDirectionWS));
                 color.rgb += albedo.rgb * mainLight.color * (back * back * back) * _Translucency * mainLight.shadowAttenuation;
 
@@ -185,7 +215,6 @@ Shader "OblivionFoliage/URP Foliage Wind"
             #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 
             float3 _LightDirection;
             float3 _LightPosition;
@@ -236,34 +265,46 @@ Shader "OblivionFoliage/URP Foliage Wind"
 
             HLSLPROGRAM
             #pragma target 3.5
-            #pragma vertex vert
+            #pragma vertex DepthVert
             #pragma fragment frag
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
-
-            Varyings vert (Attributes v)
-            {
-                Varyings o = (Varyings)0;
-                UNITY_SETUP_INSTANCE_ID(v);
-                UNITY_TRANSFER_INSTANCE_ID(v, o);
-                float3 nWS;
-                o.positionCS = TransformWorldToHClip(WindWS(v, nWS));
-                o.uv = TRANSFORM_TEX(v.uv, _BaseMap);
-                return o;
-            }
-
-            half frag (Varyings i) : SV_Target
+            half frag(DepthVaryings i) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i);
-                SampleAlbedo(i.uv);
-                #if defined(LOD_FADE_CROSSFADE)
-                    LODFadeCrossFade(i.positionCS);
-                #endif
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                ClipDepth(i);
                 return i.positionCS.z;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "AsciiSurfaceId"
+            Tags { "LightMode"="AelidSurfaceId" }
+            ZWrite Off
+            ZTest LEqual
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex DepthVert
+            #pragma fragment frag
+            #pragma shader_feature_local _ALPHATEST_ON
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
+            #pragma multi_compile_instancing
+
+            half4 frag(DepthVaryings i) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                ClipDepth(i);
+                // Match Aelid's rendering-layer encoding in AsciiSurfaceId.shader.
+                uint bits = GetMeshRenderingLayer() & 0xFEu;
+                uint surfaceClass = bits != 0u ? firstbitlow(bits) : 0u;
+                return half4(surfaceClass / 255.0, 0, 0, 1);
             }
             ENDHLSL
         }
@@ -282,7 +323,6 @@ Shader "OblivionFoliage/URP Foliage Wind"
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; UNITY_VERTEX_INPUT_INSTANCE_ID };
 

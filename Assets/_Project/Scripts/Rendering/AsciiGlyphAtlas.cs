@@ -9,7 +9,7 @@ namespace Aelid.Rendering
     /// bitmaps, so no font file or imported texture is required.
     ///
     /// Layout: 16 columns x 16 rows of 8x8 glyphs (128x128, R8).
-    ///   Row    = glyph vocabulary, indexed by AsciiSurfaceClass (row 15 = sky).
+    ///   Row    = surface vocabulary or alternate ramp (row 15 = sky).
     ///   Col 0-9  = density ramp, sorted by ink coverage (dark -> bright).
     ///   Col 10-13 = line glyphs | - / \ used on detected edges.
     ///   Col 14 = sparkle (flowers by day, fireflies by night).
@@ -29,6 +29,10 @@ namespace Aelid.Rendering
         public const int ColEdgeBackslash = 13;
         public const int ColSparkle = 14;
         public const int ColSolid = 15;
+
+        public const int GrassAltRow = 8;
+        public const int FoliageAltRow = 9;
+        public const int StoneAltRow = 10;
 
         // Thin grass blades have no keyboard character; they live in the
         // private-use range so vocabulary strings can still list them.
@@ -53,14 +57,17 @@ namespace Aelid.Rendering
         // Dense surfaces use letters, as in classic ASCII art: walls read as text.
         static readonly Dictionary<int, string> k_Vocabularies = new()
         {
-            { (int)AsciiSurfaceClass.Default,  " .:-=+*#%@" },
-            { (int)AsciiSurfaceClass.Exempt,   " .:-=+*#%@" },
-            { (int)AsciiSurfaceClass.Foliage,  " .,;o*&8♣♠" },
+            { (int)AsciiSurfaceClass.Default,  " .,'-:~=+x" },
+            { (int)AsciiSurfaceClass.Exempt,   " .-:=+≡*#@" },
+            { (int)AsciiSurfaceClass.Foliage,  " .,ioe8QMn" },
             { (int)AsciiSurfaceClass.Water,    k_WaterLines },
             { (int)AsciiSurfaceClass.Stone,    " .:oO8SQMB" },
             { (int)AsciiSurfaceClass.Emissive, " .'^*+A#%@" },
             { (int)AsciiSurfaceClass.Grass,    k_GrassBlades },
             { (int)AsciiSurfaceClass.Wood,     " .-=+xNH#@" },
+            { GrassAltRow,                    k_GrassBlades },
+            { FoliageAltRow,                  " .'rnuoqA&" },
+            { StoneAltRow,                    " .:inurqNB" },
             { AsciiSurfaceLayers.SkyClass,     " .`'-~+*=%" },
         };
 
@@ -108,29 +115,35 @@ namespace Aelid.Rendering
             { 'S', new[] { "..XXXX..", ".X......", ".X......", "..XXX...", ".....X..", ".....X..", "XXXXX...", "........" } },
             { 'M', new[] { "X.....X.", "XX...XX.", "X.X.X.X.", "X..X..X.", "X.....X.", "X.....X.", "X.....X.", "........" } },
             { 'N', new[] { "X.....X.", "XX....X.", "X.X...X.", "X..X..X.", "X...X.X.", "X....XX.", "X.....X.", "........" } },
+            { 'i', new[] { "........", "...X....", "........", "..XX....", "...X....", "...X....", "..XXX...", "........" } },
+            { 'e', new[] { "........", "........", "..XXX...", ".X...X..", ".XXXXX..", ".X......", "..XXX...", "........" } },
+            { 'r', new[] { "........", "........", ".X.XX...", ".XX.....", ".X......", ".X......", ".X......", "........" } },
+            { 'n', new[] { "........", "........", ".X.XX...", ".XX..X..", ".X...X..", ".X...X..", ".X...X..", "........" } },
+            { 'u', new[] { "........", "........", ".X...X..", ".X...X..", ".X...X..", ".X..XX..", "..XX.X..", "........" } },
+            { 'q', new[] { "........", "........", "..XX.X..", ".X..XX..", ".X...X..", "..XXXX..", ".....X..", ".....X.." } },
 
             // Grass blades, 1 px strokes rooted at the cell bottom, sparse -> dense.
             { Sprout,     new[] { "........", "........", "........", "........", "........", "....X...", "....X...", "........" } },
             { Blade,      new[] { "........", "........", "........", "........", "........", ".....X..", "....X...", "....X..." } },
             { TallBlade,  new[] { "........", "........", "........", "...X....", "...X....", "....X...", "....X...", "....X..." } },
             { TwinBlades, new[] { "........", "........", "........", "........", "..X...X.", "..X..X..", "...X.X..", "...X.X.." } },
-            { TallTwin,   new[] { "........", "........", ".X......", ".X....X.", "..X..X..", "..X..X..", "...X.X..", "...X.X.." } },
-            { Tuft,       new[] { "........", "....X...", ".X..X..X", ".X..X.X.", "..X.X.X.", "..X.X.X.", "...XXX..", "...XX..." } },
-            { ThickTuft,  new[] { "...X....", "X..X..X.", ".X.X.X..", ".X.X.X..", ".XX.X..X", "..X.X.X.", "..XXX.X.", "...XXX.." } },
-            { Sward,      new[] { "X..X.X..", "X.X..X.X", ".XX.X.X.", "X.X.XX.X", ".XX.X.X.", "X.XXX.X.", ".XX.XXX.", "..XXXX.." } },
+            { TallTwin,   new[] { ".X......", ".X......", "..X.....", "..X...X.", "..X...X.", "...X.X..", "...X.X..", "...X.X.." } },
+            { Tuft,       new[] { ".....X..", "X....X..", ".X..X...", ".X..X..X", "..X.X.X.", "..X.X.X.", "..XX..X.", "...X.X.." } },
+            { ThickTuft,  new[] { "...X..X.", "X..X..X.", "X..X.X..", ".X.X.X.X", ".X.X.X.X", ".X.X.X.X", "..XX.X.X", "..X..X.X" } },
+            { Sward,      new[] { "X..X..X.", "X..X..XX", ".X.X.X.X", ".X.X.X.X", "XX.X.X.X", "X.XX.X.X", "X.X.XX.X", "X.X.X..X" } },
 
             // Water lines.
             { Dash,       new[] { "........", "........", "........", "........", "...XX...", "........", "........", "........" } },
             { '≡',        new[] { "........", ".XXXXXX.", "........", ".XXXXXX.", "........", ".XXXXXX.", "........", "........" } },
-            { WaterHatch, new[] { "........", "XXX.XXXX", "........", ".XXXX.XX", "........", "XX.XXXX.", "........", "XXXX.XXX" } },
-            { WaterLines, new[] { "XXXXXXXX", "........", "XXXXXXXX", "........", "XXXXXXXX", "........", "XXXXXXXX", "........" } },
+            { WaterHatch, new[] { "........", "..XXXXX.", "........", "XXX.XXX.", "........", ".XXX.XXX", "........", "..XXXXX." } },
+            { WaterLines, new[] { "XXXX.XXX", "........", ".XXXXXX.", "........", "XXX.XXXX", "........", ".XXXXXX.", "........" } },
         };
 
         // Line glyphs. Diagonals run corner to corner so they connect across cells.
-        static readonly string[] k_EdgeVertical = { "...XX...", "...XX...", "...XX...", "...XX...", "...XX...", "...XX...", "...XX...", "...XX..." };
-        static readonly string[] k_EdgeHorizontal = { "........", "........", "........", "XXXXXXXX", "XXXXXXXX", "........", "........", "........" };
-        static readonly string[] k_EdgeSlash = { "......XX", ".....XX.", "....XX..", "...XX...", "..XX....", ".XX.....", "XX......", "X......." };
-        static readonly string[] k_EdgeBackslash = { "XX......", ".XX.....", "..XX....", "...XX...", "....XX..", ".....XX.", "......XX", ".......X" };
+        static readonly string[] k_EdgeVertical = { "...X....", "...X....", "...X....", "...X....", "...X....", "...X....", "...X....", "...X...." };
+        static readonly string[] k_EdgeHorizontal = { "........", "........", "........", "XXXXXXXX", "........", "........", "........", "........" };
+        static readonly string[] k_EdgeSlash = { ".......X", "......X.", ".....X..", "....X...", "...X....", "..X.....", ".X......", "X......." };
+        static readonly string[] k_EdgeBackslash = { "X.......", ".X......", "..X.....", "...X....", "....X...", ".....X..", "......X.", ".......X" };
         static readonly string[] k_Sparkle = { "........", "........", "...X....", "..XXX...", "...X....", "........", "........", "........" };
         static readonly string[] k_Solid = { "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX" };
 
@@ -160,7 +173,7 @@ namespace Aelid.Rendering
             {
                 char[] ramp = SortedRamp(row);
                 for (int col = 0; col < Levels; col++)
-                    Blit(pixels, row, col, k_Glyphs[ramp[col]]);
+                    Blit(pixels, row, col, k_Glyphs[ramp[col]], mirror: row == GrassAltRow);
 
                 Blit(pixels, row, ColEdgeVertical, k_EdgeVertical);
                 Blit(pixels, row, ColEdgeHorizontal, k_EdgeHorizontal);
@@ -210,7 +223,7 @@ namespace Aelid.Rendering
             return count;
         }
 
-        static void Blit(byte[] pixels, int row, int col, string[] bitmap)
+        static void Blit(byte[] pixels, int row, int col, string[] bitmap, bool mirror = false)
         {
             for (int gy = 0; gy < GlyphSize; gy++)
             {
@@ -220,7 +233,8 @@ namespace Aelid.Rendering
                 for (int gx = 0; gx < GlyphSize; gx++)
                 {
                     int tx = col * GlyphSize + gx;
-                    pixels[ty * Size + tx] = line[gx] == 'X' ? (byte)255 : (byte)0;
+                    int sourceX = mirror ? GlyphSize - 1 - gx : gx;
+                    pixels[ty * Size + tx] = line[sourceX] == 'X' ? (byte)255 : (byte)0;
                 }
             }
         }

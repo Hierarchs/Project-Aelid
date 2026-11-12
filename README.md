@@ -7,34 +7,33 @@ An open-world fantasy MMORPG in **Unity 6 (URP)**: a fully 3D low-poly world ren
 
 ## Status: Milestone 1, visual foundation (working)
 
-- Hybrid ASCII renderer (URP RenderGraph feature): dark terminal-style look where glyph colour carries the lighting, per-surface glyph vocabularies (thin grass blades, letter-textured stone), flower/firefly sparkles, edge line glyphs, and characters kept in full 3D
-- Glyph-stable camera: 0.00% glyph change while scrolling (measured; ~42% without it)
-- Fixed-angle isometric follow camera with zoom
-- Controllable character (walk/run) with placeholder procedural animation
-- Day/night cycle: bright days, cold moonlit nights, warm firelight
-- Generated test area: village, wheat field, forest, pond, hilltop ruins
-- Water: planar reflections, ripple rings around wading characters, depth-blended shorelines, line-glyph water
-- Automated edit-mode and play-mode tests
+- Hybrid ASCII renderer (URP RenderGraph feature): a midnight-blue background, clumped grass strokes, mixed stone lettering, restrained water lines, and an outlined player silhouette
+- Fixed-angle isometric follow camera with a locked zoom and world-aligned glyphs
+- Playable low-poly swordsman with procedural idle, walk, and run animation
+- Day/night cycle with violet dawn mist, cold moonlight, and warm firelight
+- Generated test area with a village, wheat field, oak forest, pond, hilltop ruins, and the Broken Cloister
+- Water: planar reflections, a rippling moon reflection, ripple rings around wading characters, depth-blended shorelines, line-glyph water
+- 30 automated tests (20 edit mode + 10 play mode)
 
 Not built yet: weather, combat, enemies, multiplayer (see the roadmap in the architecture doc).
 
 ## Open it
 
 1. Unity Hub → **Add** → **Add project from disk** → select this folder. Use editor **6000.6.8f1** (Unity 6.6).
-2. Open `Assets/_Project/Scenes/VerticalSlice.unity` and press **Play**.
+2. Open `Assets/_Project/Scenes/VerticalSlice.unity` and press **Play**. The scene starts at nightfall.
 
 | Input | Action |
 |---|---|
 | WASD / arrows / left stick | Move |
 | Shift / B (gamepad) | Run |
-| Mouse wheel | Zoom |
 | F1 | Toggle ASCII (compare with the raw 3D view) |
 | F2 / F3 | Glyph density finer / coarser |
 | F4 | Toggle glyph snapping (shows the shimmer it prevents) |
-| F5 | Orthographic / perspective |
+| F6 | Switch between the current ASCII look and the clean baseline |
+| F7 | Toggle shape fitting (on by default) |
 | T | Fast time (×60) |
 | [ / ] | Time −1 h / +1 h |
-| H | Hide the HUD |
+| H | Toggle the developer HUD |
 
 **Tuning the look:** select `Environment/Global Volume` (day) or `Night Volume` and edit the **Aelid/ASCII** override. Lighting colors over the day are gradients on `Environment` → `Day Night Cycle`.
 
@@ -60,9 +59,14 @@ These commands need the project to be closed in the Editor. Unity allows one ins
 UNITY="/c/Program Files/Unity/Hub/Editor/6000.6.8f1/Editor/Unity.exe"
 # Regenerate the scene and write review screenshots + stability report to Captures/
 "$UNITY" -batchmode -projectPath . -executeMethod Aelid.EditorTools.AsciiCaptureTool.BuildAndCaptureFromCommandLine -logFile build.log
+# Compare both ASCII looks in the saved ruins scene without rebuilding it.
+"$UNITY" -batchmode -projectPath . -executeMethod Aelid.EditorTools.AsciiCaptureTool.CaptureBaselineFromCommandLine -logFile baseline.log
 # Tests
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults editmode.xml
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults playmode.xml
 ```
 
-Inside the Editor, the same tools are under the **Aelid** menu.
+The baseline capture writes matched 1920 × 1080 day and night PNGs and a
+24-frame daylight pan to `Captures/AsciiBaseline/` with shape fitting off.
+Use F6 in Play Mode to compare both presets interactively. The general review
+capture is also available under the Editor's **Aelid** menu.

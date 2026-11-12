@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Aelid.Rendering
 {
@@ -15,6 +16,19 @@ namespace Aelid.Rendering
 
         public static AsciiSettings CurrentSettings =>
             VolumeManager.instance.stack != null ? VolumeManager.instance.stack.GetComponent<AsciiSettings>() : null;
+
+        /// <summary>Size of the game camera's URP raster before upscaling.</summary>
+        public static Vector2Int RasterSize(Camera camera)
+        {
+            float scale = camera.cameraType == CameraType.Game &&
+                GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset pipeline
+                ? pipeline.renderScale : 1f;
+            // URP treats scales within 5% of native as 1x.
+            if (Mathf.Abs(1f - scale) < 0.05f)
+                scale = 1f;
+            return new Vector2Int(Mathf.Max(1, (int)(camera.pixelWidth * scale)),
+                Mathf.Max(1, (int)(camera.pixelHeight * scale)));
+        }
 
         public static int ResolveCellSize(int targetHeight) => ResolveCellSize(CurrentSettings, targetHeight);
 

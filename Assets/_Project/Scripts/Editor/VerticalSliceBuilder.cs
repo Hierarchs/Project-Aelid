@@ -19,7 +19,7 @@ namespace Aelid.EditorTools
     /// gives the same world. This is a bootstrap tool: once hand-made content
     /// replaces it, stop rebuilding over the scene.
     /// </summary>
-    public static class VerticalSliceBuilder
+    public static partial class VerticalSliceBuilder
     {
         const string Root = "Assets/_Project";
         const string MeshDir = Root + "/Generated/Meshes";
@@ -93,8 +93,12 @@ namespace Aelid.EditorTools
             BuildVillage(world);
             BuildField(world);
             BuildRuins(world);
+            BuildBrokenCloister(world);
             BuildCampfire(world, Ground(k_Camp.x, k_Camp.y)); // wilderness camp in a meadow
-            BuildVegetationAndRocks(world);
+            BuildWoodlandProps(world);
+            BuildWoodlandUnderstory(world);
+            BuildOakGrove(world);
+            BuildRegions(world); // after the hand-placed content, which it works around
             BuildBoundary(world);
 
             var player = BuildPlayer();
@@ -210,11 +214,13 @@ namespace Aelid.EditorTools
                     else { AddTri(i00, i01, i10); AddTri(i10, i01, i11); }
                 }
 
+            // Grass and dirt: main's textured ground shader (colours live in Ground.shader).
+            // Rock and sand: the swordsman branch's darker, cooler palette.
             AddTerrainPart(root, "Grass A", buckets["GrassA"], GroundMaterials.Get("Terrain_GrassA"), AsciiSurfaceClass.Grass);
             AddTerrainPart(root, "Grass B", buckets["GrassB"], GroundMaterials.Get("Terrain_GrassB"), AsciiSurfaceClass.Grass);
             AddTerrainPart(root, "Dirt", buckets["Dirt"], GroundMaterials.Get("Terrain_Dirt"), AsciiSurfaceClass.Default);
-            AddTerrainPart(root, "Rock", buckets["Rock"], Mat("Terrain_Rock", new Color(0.42f, 0.40f, 0.38f)), AsciiSurfaceClass.Stone);
-            AddTerrainPart(root, "Sand", buckets["Sand"], Mat("Terrain_Sand", new Color(0.70f, 0.63f, 0.44f)), AsciiSurfaceClass.Default);
+            AddTerrainPart(root, "Rock", buckets["Rock"], Mat("Terrain_Rock", new Color(0.34f, 0.38f, 0.43f)), AsciiSurfaceClass.Stone);
+            AddTerrainPart(root, "Sand", buckets["Sand"], Mat("Terrain_Sand", new Color(0.40f, 0.40f, 0.38f)), AsciiSurfaceClass.Default);
             AddTerrainPart(root, "Snow", buckets["Snow"], Mat("Terrain_Snow", new Color(0.88f, 0.90f, 0.95f), 0.3f), AsciiSurfaceClass.Default);
 
             var collisionMesh = new Mesh { name = "Terrain_Collision", indexFormat = IndexFormat.UInt32 };
@@ -309,11 +315,11 @@ namespace Aelid.EditorTools
             var root = new GameObject("Village").transform;
             root.SetParent(world, false);
 
-            var walls = Mat("House_Walls", new Color(0.66f, 0.55f, 0.40f));
-            var timber = Mat("House_Timber", new Color(0.30f, 0.19f, 0.11f));
-            var roofRed = Mat("House_Roof_Red", new Color(0.56f, 0.20f, 0.13f));
-            var roofSlate = Mat("House_Roof_Slate", new Color(0.27f, 0.30f, 0.37f));
-            var stone = Mat("Stone", new Color(0.46f, 0.45f, 0.43f));
+            var walls = Mat("House_Walls", new Color(0.46f, 0.42f, 0.36f));
+            var timber = Mat("House_Timber", new Color(0.24f, 0.20f, 0.18f));
+            var roofRed = Mat("House_Roof_Red", new Color(0.40f, 0.24f, 0.21f));
+            var roofSlate = Mat("House_Roof_Slate", new Color(0.22f, 0.27f, 0.34f));
+            var stone = Mat("Stone", new Color(0.39f, 0.43f, 0.47f));
             var window = Mat("Window", new Color(0.08f, 0.07f, 0.05f), 0.6f, 0f, Color.black);
 
             var wallMesh = SaveMesh(Build(m => m.Box(new Vector3(0, 1.6f, 0), new Vector3(6f, 3.2f, 5f)), "House_Walls"));
@@ -360,7 +366,7 @@ namespace Aelid.EditorTools
 
                 var nightLight = house.gameObject.AddComponent<NightLight>();
                 nightLight.emissiveRenderers = new Renderer[] { win.GetComponent<MeshRenderer>() };
-                nightLight.emission = new Color(2.0f, 1.0f, 0.28f);
+                nightLight.emission = new Color(1.8f, 0.72f, 0.20f);
             }
 
             BuildCampfire(root, new Vector3(0f, Height(0, 0), 0f));
@@ -386,19 +392,19 @@ namespace Aelid.EditorTools
                 float a = i * Mathf.PI * 2f / 9f;
                 stones.Blob(new Vector3(Mathf.Cos(a) * 0.95f, 0.12f, Mathf.Sin(a) * 0.95f), new Vector3(0.28f, 0.2f, 0.25f), 0, 0.25f, 100 + i);
             }
-            MeshObject("Stones", root, SaveMesh(stones.ToMesh("Campfire_Stones")), Mat("Stone", new Color(0.46f, 0.45f, 0.43f)), AsciiSurfaceClass.Stone, Vector3.zero, Quaternion.identity, Vector3.one);
+            MeshObject("Stones", root, SaveMesh(stones.ToMesh("Campfire_Stones")), Mat("Stone", new Color(0.39f, 0.43f, 0.47f)), AsciiSurfaceClass.Stone, Vector3.zero, Quaternion.identity, Vector3.one);
 
             var logs = new LowPolyMesh();
             for (int i = 0; i < 4; i++)
                 logs.Box(new Vector3(0, 0.15f, 0), new Vector3(0.18f, 0.18f, 1.3f), Quaternion.Euler(10f, i * 45f, 0f));
-            MeshObject("Logs", root, SaveMesh(logs.ToMesh("Campfire_Logs")), Mat("House_Timber", new Color(0.30f, 0.19f, 0.11f)), AsciiSurfaceClass.Wood, Vector3.zero, Quaternion.identity, Vector3.one);
+            MeshObject("Logs", root, SaveMesh(logs.ToMesh("Campfire_Logs")), Mat("House_Timber", new Color(0.24f, 0.20f, 0.18f)), AsciiSurfaceClass.Wood, Vector3.zero, Quaternion.identity, Vector3.one);
 
             var flames = new LowPolyMesh();
             flames.Cone(new Vector3(0, 0.15f, 0), 0.42f, 1.1f, 5, 0f);
             flames.Cone(new Vector3(0.18f, 0.15f, 0.1f), 0.25f, 0.75f, 5, 30f);
             flames.Cone(new Vector3(-0.15f, 0.15f, -0.12f), 0.22f, 0.65f, 5, 60f);
             var flame = MeshObject("Flames", root, SaveMesh(flames.ToMesh("Campfire_Flames")),
-                Mat("Fire", new Color(1f, 0.55f, 0.15f), 0f, 0f, new Color(6f, 2.4f, 0.5f)), AsciiSurfaceClass.Emissive, Vector3.zero, Quaternion.identity, Vector3.one);
+                Mat("Fire", new Color(1f, 0.55f, 0.15f), 0f, 0f, new Color(3.9f, 1.1f, 0.22f)), AsciiSurfaceClass.Emissive, Vector3.zero, Quaternion.identity, Vector3.one);
             flame.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
 
             var lightGo = new GameObject("Fire Light");
@@ -406,7 +412,7 @@ namespace Aelid.EditorTools
             lightGo.transform.localPosition = new Vector3(0, 1.1f, 0);
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
-            light.color = new Color(1f, 0.44f, 0.12f); // saturated so lit grass turns ochre-orange
+            light.color = new Color(1f, 0.56f, 0.27f);
             light.intensity = 24f;
             light.range = 18f;
             lightGo.AddComponent<FlickerLight>().baseIntensity = 24f;
@@ -460,7 +466,7 @@ namespace Aelid.EditorTools
             night.lights = new[] { light };
             night.intensity = 8f;
             night.emissiveRenderers = new Renderer[] { headGo.GetComponent<MeshRenderer>() };
-            night.emission = new Color(2.6f, 1.35f, 0.35f);
+            night.emission = new Color(2.4f, 1.0f, 0.26f);
             var col = root.gameObject.AddComponent<CapsuleCollider>();
             col.radius = 0.15f;
             col.height = 3f;
@@ -480,7 +486,7 @@ namespace Aelid.EditorTools
                     var p = Ground(x, z);
                     crops.Blob(p + Vector3.up * 0.35f, new Vector3(0.35f, 0.45f, 0.3f), 0, 0.3f, seed++);
                 }
-            MeshObject("Crops", root, SaveMesh(crops.ToMesh("Field_Crops")), Mat("Wheat", new Color(0.78f, 0.64f, 0.26f)), AsciiSurfaceClass.Grass, Vector3.zero, Quaternion.identity, Vector3.one);
+            MeshObject("Crops", root, SaveMesh(crops.ToMesh("Field_Crops")), Mat("Wheat", new Color(0.59f, 0.51f, 0.32f)), AsciiSurfaceClass.Grass, Vector3.zero, Quaternion.identity, Vector3.one);
 
             var fence = new LowPolyMesh();
             var corners = new[]
@@ -517,8 +523,8 @@ namespace Aelid.EditorTools
         {
             var root = new GameObject("Hilltop Ruins").transform;
             root.SetParent(world, false);
-            var ruinStone = Mat("Ruin_Stone", new Color(0.52f, 0.50f, 0.47f));
-            var mossStone = Mat("Ruin_Moss", new Color(0.36f, 0.42f, 0.30f));
+            var ruinStone = Mat("Ruin_Stone", new Color(0.42f, 0.47f, 0.52f));
+            var mossStone = Mat("Ruin_Moss", new Color(0.29f, 0.38f, 0.33f));
 
             var pillars = new LowPolyMesh();
             float[] heights = { 5.2f, 0f, 3.6f, 1.2f, 4.8f, 0.7f, 0f, 2.6f, 5.0f, 1.8f };
@@ -583,137 +589,171 @@ namespace Aelid.EditorTools
 
         // ------------------------------------------------------------------ vegetation
 
-        static void BuildVegetationAndRocks(Transform world)
+        internal static void BuildWoodlandProps(Transform world)
         {
-            var trees = new GameObject("Trees").transform;
-            trees.SetParent(world, false);
-            var rocks = new GameObject("Rocks").transform;
-            rocks.SetParent(world, false);
-            var bushes = new GameObject("Bushes").transform;
-            bushes.SetParent(world, false);
+            var ground = world.Find("Terrain/Terrain Collider").GetComponent<MeshCollider>();
+            var props = new GameObject("Woodland Props").transform;
+            props.SetParent(world, false);
 
-            var trunkMat = Mat("Tree_Trunk", new Color(0.33f, 0.22f, 0.13f));
-            var pineMat = Mat("Tree_Pine", new Color(0.16f, 0.38f, 0.21f));
-            var oakMats = new[] { Mat("Tree_Oak_A", new Color(0.28f, 0.53f, 0.18f)), Mat("Tree_Oak_B", new Color(0.38f, 0.57f, 0.16f)) };
-            var bushMat = Mat("Bush", new Color(0.25f, 0.47f, 0.19f));
-            var rockMat = Mat("Rock", new Color(0.44f, 0.43f, 0.41f));
-
-            var trunk = SaveMesh(Build(m => m.Cylinder(Vector3.zero, 0.22f, 0.16f, 1.6f, 5), "Tree_Trunk"));
-            var pines = new Mesh[3];
-            for (int v = 0; v < pines.Length; v++)
+            Transform Group(string name)
             {
-                int vv = v;
-                pines[v] = SaveMesh(Build(m =>
-                {
-                    float y = 1.0f;
-                    float r = 1.55f + vv * 0.12f;
-                    for (int tier = 0; tier < 3 + (vv == 2 ? 1 : 0); tier++)
-                    {
-                        m.Cone(new Vector3(0, y, 0), r, 1.9f, 6, tier * 17f + vv * 9f);
-                        y += 1.15f;
-                        r *= 0.74f;
-                    }
-                }, $"Tree_Pine_{v}"));
-            }
-            var oaks = new Mesh[3];
-            for (int v = 0; v < oaks.Length; v++)
-            {
-                int vv = v;
-                oaks[v] = SaveMesh(Build(m =>
-                {
-                    m.Blob(new Vector3(0, 2.6f, 0), new Vector3(1.7f, 1.45f, 1.7f), 1, 0.16f, 900 + vv);
-                    m.Blob(new Vector3(0.7f, 2.2f, 0.4f), new Vector3(1.0f, 0.9f, 1.0f), 0, 0.2f, 950 + vv);
-                }, $"Tree_Oak_{v}"));
-            }
-            var bushMeshes = new Mesh[3];
-            for (int v = 0; v < 3; v++)
-            {
-                int vv = v;
-                bushMeshes[v] = SaveMesh(Build(m => m.Blob(new Vector3(0, 0.45f, 0), new Vector3(0.85f, 0.6f, 0.8f), 1, 0.22f, 700 + vv), $"Bush_{v}"));
-            }
-            var rockMeshes = new Mesh[5];
-            for (int v = 0; v < 5; v++)
-            {
-                int vv = v;
-                rockMeshes[v] = SaveMesh(Build(m => m.Blob(new Vector3(0, 0.3f, 0), new Vector3(1f, 0.65f, 0.85f), vv % 2, 0.3f, 300 + vv), $"Rock_{v}"));
+                var group = new GameObject(name).transform;
+                group.SetParent(props, false);
+                return group;
             }
 
-            int placedTrees = 0;
-            for (int attempt = 0; attempt < 6000 && placedTrees < 230; attempt++)
+            void Place(Transform group, string asset, float x, float z, float yaw, float scale = 1f)
             {
-                float x = ((float)s_Rng.NextDouble() * 2f - 1f) * 70f;
-                float z = ((float)s_Rng.NextDouble() * 2f - 1f) * 70f;
-                var p = new Vector2(x, z);
-                if (!IsFree(p, 2.6f)) continue;
-                float h = Height(x, z);
-                if (h > 13f || h < WaterLevel + 0.6f) continue;
-                float forest = Mathf.PerlinNoise(x * 0.035f + 5f, z * 0.035f + 9f) + (z > 15f ? 0.18f : 0f) + (x < -30f ? 0.12f : 0f);
-                if (forest < 0.52f && s_Rng.NextDouble() > 0.06) continue;
-
-                bool pine = h > 3.5f || Mathf.PerlinNoise(x * 0.05f + 70f, z * 0.05f) > 0.55f;
-                var tree = new GameObject(pine ? "Pine" : "Oak").transform;
-                tree.SetParent(trees, false);
-                tree.SetPositionAndRotation(new Vector3(x, h - 0.1f, z), Quaternion.Euler(0, (float)s_Rng.NextDouble() * 360f, 0));
-                float s = 0.8f + (float)s_Rng.NextDouble() * 0.55f;
-                tree.localScale = new Vector3(s, s * (0.9f + (float)s_Rng.NextDouble() * 0.25f), s);
-                MeshObject("Trunk", tree, trunk, trunkMat, AsciiSurfaceClass.Wood, Vector3.zero, Quaternion.identity, Vector3.one);
-                if (pine)
-                    MeshObject("Crown", tree, pines[s_Rng.Next(pines.Length)], pineMat, AsciiSurfaceClass.Foliage, Vector3.zero, Quaternion.identity, Vector3.one);
-                else
-                    MeshObject("Crown", tree, oaks[s_Rng.Next(oaks.Length)], oakMats[s_Rng.Next(oakMats.Length)], AsciiSurfaceClass.Foliage, Vector3.zero, Quaternion.identity, Vector3.one);
-                var col = tree.gameObject.AddComponent<CapsuleCollider>();
-                col.radius = 0.3f;
-                col.height = 3f;
-                col.center = new Vector3(0, 1.5f, 0);
-                placedTrees++;
+                PlaceWoodlandProp(group, ground, asset, x, z, yaw, scale);
             }
 
-            for (int i = 0, placed = 0; i < 3000 && placed < 90; i++)
+            var camp = Group("Camp Clearing");
+            Place(camp, "Log_Fallen_Long", 14.9f, 17.2f, 67f);
+            Place(camp, "Stump", 15.9f, 20f, 125f, 0.9f);
+            Place(camp, "Mushroom_Cluster", 15.25f, 19.3f, 32f, 1.2f);
+
+            var bank = Group("Pond Bank");
+            Place(bank, "Rock_Boulder_Large", 35.7f, -8.5f, 38f, 0.85f);
+            Place(bank, "Rock_Slab", 33.9f, -7.2f, 115f, 0.82f);
+            Place(bank, "Rock_Small", 35.8f, -6.95f, 75f, 0.8f);
+
+            var ruins = Group("Ruins Approach");
+            Place(ruins, "Rock_Slab", -34.2f, 22.2f, 18f, 0.85f);
+            Place(ruins, "Rock_Cluster", -35.85f, 21.75f, 142f, 0.8f);
+            Place(ruins, "Rock_Small", -36.9f, 22.1f, 82f, 0.9f);
+        }
+
+        internal static void BuildWoodlandUnderstory(Transform world)
+        {
+            var ground = world.Find("Terrain/Terrain Collider").GetComponent<MeshCollider>();
+            var root = new GameObject("Woodland Understory").transform;
+            root.SetParent(world, false);
+
+            void AddPatch(string name, params (string asset, float x, float z, float yaw, float scale)[] plants)
             {
-                float x = ((float)s_Rng.NextDouble() * 2f - 1f) * 66f;
-                float z = ((float)s_Rng.NextDouble() * 2f - 1f) * 66f;
-                var p = new Vector2(x, z);
-                if (!IsFree(p, 1.6f) || Vector2.Distance(p, k_Village) < 15f) continue;
-                float h = Height(x, z);
-                if (h > 9f || h < WaterLevel + 0.3f) continue;
-                if (Mathf.PerlinNoise(x * 0.06f + 3f, z * 0.06f + 1f) < 0.45f) continue;
-                float s = 0.6f + (float)s_Rng.NextDouble() * 0.7f;
-                MeshObject("Bush", bushes, bushMeshes[s_Rng.Next(bushMeshes.Length)], bushMat, AsciiSurfaceClass.Foliage,
-                    new Vector3(x, h - 0.08f, z), Quaternion.Euler(0, (float)s_Rng.NextDouble() * 360f, 0), new Vector3(s, s, s));
-                placed++;
+                var group = new GameObject(name).transform;
+                group.SetParent(root, false);
+                foreach (var plant in plants)
+                    PlaceWoodlandProp(group, ground, plant.asset, plant.x, plant.z, plant.yaw, plant.scale);
             }
 
-            for (int i = 0, placed = 0; i < 3000 && placed < 70; i++)
+            AddPatch("Village Verges",
+                ("Flower_Patch", -2.9f, -5.8f, 12f, 1.2f),
+                ("Grass_Clump", -4.1f, -6.9f, 84f, 1.1f),
+                ("Bush_Flowering", -8.1f, -3.2f, 68f, 1f),
+                ("Flower_Patch", -7.1f, -4.1f, 103f, 1f),
+                ("Bush_Flowering", 8f, 4.9f, 25f, 0.9f),
+                ("Grass_Clump", 9.25f, 4.65f, 175f, 1.1f));
+
+            AddPatch("Pond Banks",
+                ("Fern", 22.15f, -4.65f, 55f, 1.2f),
+                ("Grass_Clump", 21.55f, -5.55f, 175f, 1.1f),
+                ("Bush_Broadleaf_Round", 14.2f, -14.5f, 73f, 1.05f),
+                ("Fern", 14.95f, -15.35f, 130f, 1.05f),
+                ("Grass_Clump", 38.45f, -10.2f, 24f, 1.2f));
+
+            AddPatch("Camp and North Woods",
+                ("Fern", 9.7f, 20.3f, 85f, 1.2f),
+                ("Flower_Patch", 10.75f, 20.75f, 210f, 1.15f),
+                ("Bush_Broadleaf_Round", 13.05f, 22.1f, 54f, 1.15f),
+                ("Fern", -4.35f, 29.9f, 61f, 1.25f),
+                ("Bush_SmallLeaf_Tall", -2.9f, 32.65f, 145f, 1.05f),
+                ("Mushroom_Cluster", -5.25f, 30.65f, 119f, 1.2f));
+
+            AddPatch("Ruins Approaches",
+                ("Fern", -28.6f, 28.5f, 105f, 1.15f),
+                ("Bush_Bramble_Dry", -36.2f, 24.25f, 166f, 1f),
+                ("Vine_Ground_Creeper", -37.25f, 24.65f, 48f, 1.15f),
+                ("Vine_Ground_Creeper", 38.15f, -0.4f, 270f, 1.15f),
+                ("Bush_Broadleaf_Round", 39.3f, 0.95f, 80f, 1.05f),
+                ("Fern", 38.8f, 2.35f, 143f, 1.1f));
+
+            AddPatch("South Road",
+                ("Bush_SmallLeaf_Tall", -2.6f, -29.1f, 25f, 1.1f),
+                ("Grass_Clump", -3.7f, -30.15f, 115f, 1.05f),
+                ("Fern", 5.1f, -34.3f, 220f, 1.1f),
+                ("Bush_Flowering", 4.75f, -41f, 65f, 1f),
+                ("Flower_Patch", 5.95f, -41.6f, 95f, 1.1f));
+        }
+
+        static void PlaceWoodlandProp(Transform group, MeshCollider ground, string asset, float x, float z, float yaw, float scale)
+        {
+            const string prefabDir = Root + "/Art/Environment/OblivionFoliage/Prefabs";
+            var prefab = LoadWoodlandPrefab($"{prefabDir}/SM_{asset}.prefab");
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, group);
+            PlaceOnTerrain(instance.transform, ground, x, z, yaw, scale);
+        }
+
+        internal static void BuildOakGrove(Transform world)
+        {
+            var ground = world.Find("Terrain/Terrain Collider").GetComponent<MeshCollider>();
+            var grove = new GameObject("Oak Grove Trees").transform;
+            grove.SetParent(world, false);
+
+            void Place(string variant, float x, float z, float yaw, float scale, float trunkRadius)
             {
-                float x = ((float)s_Rng.NextDouble() * 2f - 1f) * 72f;
-                float z = ((float)s_Rng.NextDouble() * 2f - 1f) * 72f;
-                var p = new Vector2(x, z);
-                if (!IsFree(p, 1.4f) || Vector2.Distance(p, k_Village) < 16f) continue;
-                float h = Height(x, z);
-                if (h < WaterLevel) continue;
-                float rim = p.magnitude / WorldHalfSize;
-                float s = 0.4f + (float)s_Rng.NextDouble() * (rim > 0.6f ? 2.4f : 1.0f);
-                var go = MeshObject("Rock", rocks, rockMeshes[s_Rng.Next(rockMeshes.Length)], rockMat, AsciiSurfaceClass.Stone,
-                    new Vector3(x, h - 0.15f * s, z), Quaternion.Euler((float)s_Rng.NextDouble() * 20f, (float)s_Rng.NextDouble() * 360f, 0), new Vector3(s, s, s));
-                if (s > 0.8f)
-                {
-                    var col = go.AddComponent<SphereCollider>();
-                    col.radius = 0.7f;
-                    col.center = new Vector3(0, 0.3f, 0);
-                }
-                placed++;
+                var tree = new GameObject($"Oak_{variant}").transform;
+                tree.SetParent(grove, false);
+                PlaceOnTerrain(tree, ground, x, z, yaw, scale);
+                AttachOakModel(tree, variant, 1f);
+
+                var trunk = tree.gameObject.AddComponent<CapsuleCollider>();
+                trunk.radius = trunkRadius;
+                trunk.height = 2.8f;
+                trunk.center = Vector3.up * 1.4f;
+            }
+
+            Place("Broadcrown", 6.8f, 21.8f, 34f, 0.72f, 0.52f);
+            Place("Windlean", 39f, -6.4f, -24f, 0.7f, 0.42f);
+            Place("Splitfork", -38.6f, 22.8f, 108f, 0.7f, 0.46f);
+            Place("Ancient", -6f, 32f, 18f, 0.72f, 0.6f);
+        }
+
+        static void AttachOakModel(Transform tree, string variant, float scale)
+        {
+            const string modelDir = Root + "/Art/Environment/OakGrove/FBX/Trees";
+            var prefab = LoadWoodlandPrefab($"{modelDir}/Oak_{variant}.fbx");
+            // Keep the FBX's imported axis conversion on the model. The trunk collider stays upright.
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(prefab, tree);
+            model.transform.SetLocalPositionAndRotation(Vector3.zero, prefab.transform.localRotation);
+            model.transform.localScale = Vector3.one * scale;
+            foreach (var renderer in model.GetComponentsInChildren<MeshRenderer>())
+            {
+                var surface = renderer.name.EndsWith("_LeafCards", System.StringComparison.Ordinal)
+                    ? AsciiSurfaceClass.Foliage : AsciiSurfaceClass.Wood;
+                renderer.renderingLayerMask = AsciiSurfaceLayers.Apply(renderer.renderingLayerMask, surface);
+                PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
             }
         }
 
-        static bool IsFree(Vector2 p, float pathClearance)
+        internal static void BuildBrokenCloister(Transform world)
         {
-            if (Vector2.Distance(p, k_Village) < 19f) return false;
-            if (Vector2.Distance(p, k_Pond) < 13.2f) return false; // trees may stand on the bank and reflect
-            if (Vector2.Distance(p, k_Ruins) < 10f) return false;
-            if (Vector2.Distance(p, k_Camp) < 7f) return false;
-            if (DistanceToRect(p, k_Field) < 2.5f) return false;
-            if (DistanceToPaths(p) < pathClearance) return false;
-            return true;
+            var ground = world.Find("Terrain/Terrain Collider").GetComponent<MeshCollider>();
+            var prefab = LoadWoodlandPrefab(Root + "/Art/Ruins/Broken Cloister.prefab");
+            var cloister = (GameObject)PrefabUtility.InstantiatePrefab(prefab, world);
+            cloister.transform.position = TerrainContact(ground, 33f, 0f) - Vector3.up * 0.06f;
+        }
+
+        static GameObject LoadWoodlandPrefab(string path)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+                throw new System.InvalidOperationException($"Missing environment asset at {path}.");
+            return prefab;
+        }
+
+        static void PlaceOnTerrain(Transform instance, MeshCollider ground, float x, float z, float yaw, float scale)
+        {
+            instance.SetPositionAndRotation(TerrainContact(ground, x, z), Quaternion.Euler(0f, yaw, 0f));
+            instance.localScale = Vector3.one * scale;
+        }
+
+        static Vector3 TerrainContact(MeshCollider ground, float x, float z)
+        {
+            var ray = new Ray(new Vector3(x, 50f, z), Vector3.down);
+            if (!ground.Raycast(ray, out RaycastHit hit, 100f))
+                throw new System.InvalidOperationException($"No terrain at ({x}, {z}).");
+            return hit.point;
         }
 
         static void BuildBoundary(Transform world)
@@ -755,73 +795,36 @@ namespace Aelid.EditorTools
             player.AddComponent<AsciiSurface>().SurfaceClass = AsciiSurfaceClass.Exempt;
             player.AddComponent<WaterRippleEmitter>();
 
-            var tunic = Mat("Player_Tunic", new Color(0.64f, 0.12f, 0.10f));
-            var pants = Mat("Player_Pants", new Color(0.26f, 0.20f, 0.15f));
-            var skin = Mat("Player_Skin", new Color(0.86f, 0.66f, 0.52f));
-            var hair = Mat("Player_Hair", new Color(0.16f, 0.11f, 0.08f));
-            var leather = Mat("Player_Leather", new Color(0.36f, 0.24f, 0.14f));
-            var steel = Mat("Player_Steel", new Color(0.78f, 0.80f, 0.84f), 0.75f, 0.85f);
-            var cape = Mat("Player_Cape", new Color(0.14f, 0.16f, 0.30f));
-
-            var visual = new GameObject("Visual").transform;
-            visual.SetParent(player.transform, false);
-
-            Transform Pivot(string name, Transform parent, Vector3 localPos)
-            {
-                var t = new GameObject(name).transform;
-                t.SetParent(parent, false);
-                t.localPosition = localPos;
-                return t;
-            }
-
-            var body = Pivot("Body", visual, new Vector3(0, 0.92f, 0));
-            Part("Torso", body, tunic, new Vector3(0, 0.33f, 0), new Vector3(0.52f, 0.62f, 0.30f));
-            Part("Belt", body, leather, new Vector3(0, 0.05f, 0), new Vector3(0.55f, 0.1f, 0.33f));
-            Part("Cape", body, cape, new Vector3(0, 0.25f, -0.19f), new Vector3(0.5f, 0.8f, 0.05f));
-            var head = Pivot("Head", body, new Vector3(0, 0.68f, 0));
-            Part("Face", head, skin, new Vector3(0, 0.16f, 0), new Vector3(0.30f, 0.32f, 0.30f));
-            Part("Hair", head, hair, new Vector3(0, 0.30f, -0.03f), new Vector3(0.33f, 0.1f, 0.34f));
-            Part("HairBack", head, hair, new Vector3(0, 0.18f, -0.14f), new Vector3(0.33f, 0.26f, 0.06f));
-
-            var leftArm = Pivot("Left Arm", body, new Vector3(-0.34f, 0.58f, 0));
-            Part("Sleeve", leftArm, tunic, new Vector3(0, -0.26f, 0), new Vector3(0.15f, 0.55f, 0.16f));
-            Part("Hand", leftArm, skin, new Vector3(0, -0.58f, 0), new Vector3(0.12f, 0.12f, 0.12f));
-            var rightArm = Pivot("Right Arm", body, new Vector3(0.34f, 0.58f, 0));
-            Part("Sleeve", rightArm, tunic, new Vector3(0, -0.26f, 0), new Vector3(0.15f, 0.55f, 0.16f));
-            Part("Hand", rightArm, skin, new Vector3(0, -0.58f, 0), new Vector3(0.12f, 0.12f, 0.12f));
-            Part("Sword Grip", rightArm, leather, new Vector3(0, -0.6f, 0.08f), new Vector3(0.05f, 0.05f, 0.22f));
-            Part("Sword Guard", rightArm, steel, new Vector3(0, -0.6f, 0.2f), new Vector3(0.24f, 0.05f, 0.05f));
-            Part("Sword Blade", rightArm, steel, new Vector3(0, -0.6f, 0.62f), new Vector3(0.07f, 0.03f, 0.8f));
-
-            var leftLeg = Pivot("Left Leg", visual, new Vector3(-0.13f, 0.92f, 0));
-            Part("Thigh", leftLeg, pants, new Vector3(0, -0.4f, 0), new Vector3(0.18f, 0.8f, 0.2f));
-            Part("Boot", leftLeg, leather, new Vector3(0, -0.84f, 0.04f), new Vector3(0.2f, 0.16f, 0.28f));
-            var rightLeg = Pivot("Right Leg", visual, new Vector3(0.13f, 0.92f, 0));
-            Part("Thigh", rightLeg, pants, new Vector3(0, -0.4f, 0), new Vector3(0.18f, 0.8f, 0.2f));
-            Part("Boot", rightLeg, leather, new Vector3(0, -0.84f, 0.04f), new Vector3(0.2f, 0.16f, 0.28f));
-
-            var anim = visual.gameObject.AddComponent<ProceduralHumanoidAnimator>();
-            anim.motor = player.GetComponent<PlayerMotor>();
-            anim.body = body;
-            anim.head = head;
-            anim.leftArm = leftArm;
-            anim.rightArm = rightArm;
-            anim.leftLeg = leftLeg;
-            anim.rightLeg = rightLeg;
+            var visual = new GameObject("Visual");
+            visual.transform.SetParent(player.transform, false);
+            var animator = visual.AddComponent<ProceduralHumanoidAnimator>();
+            animator.motor = player.GetComponent<PlayerMotor>();
+            AttachSwordsman(animator);
 
             player.GetComponent<AsciiSurface>().Apply();
+            foreach (var renderer in visual.GetComponentsInChildren<MeshRenderer>())
+                PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
             return player;
         }
 
-        static void Part(string name, Transform parent, Material material, Vector3 localPos, Vector3 size)
+        static void AttachSwordsman(ProceduralHumanoidAnimator animator)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name;
-            Object.DestroyImmediate(go.GetComponent<BoxCollider>());
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = localPos;
-            go.transform.localScale = size;
-            go.GetComponent<MeshRenderer>().sharedMaterial = material;
+            const string modelPath = Root + "/Art/Characters/Swordsman/Swordsman.fbx";
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+            if (model == null)
+                throw new System.InvalidOperationException($"Missing player model at {modelPath}.");
+
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(model, animator.transform);
+            var root = instance.transform;
+            animator.body = root.Find("Body");
+            animator.head = root.Find("Body/Head");
+            animator.leftArm = root.Find("Body/Left Arm");
+            animator.rightArm = root.Find("Body/Right Arm");
+            animator.leftLeg = root.Find("Left Leg");
+            animator.rightLeg = root.Find("Right Leg");
+            if (animator.body == null || animator.head == null || animator.leftArm == null ||
+                animator.rightArm == null || animator.leftLeg == null || animator.rightLeg == null)
+                throw new System.InvalidOperationException($"Missing locomotion pivots in {modelPath}.");
         }
 
         // ------------------------------------------------------------------ camera & environment
@@ -844,6 +847,7 @@ namespace Aelid.EditorTools
             rig.cam = cam;
             rig.target = player.transform;
             rig.zoomInput = player.GetComponent<PlayerInputReader>();
+            rig.lockFraming = true;
 
             var ascii = go.AddComponent<AsciiCamera>();
             ascii.FocusTarget = player.transform;
@@ -889,20 +893,64 @@ namespace Aelid.EditorTools
             cycle.celestialLight = light;
             cycle.skybox = skybox;
             cycle.nightVolume = nightVolume;
-            cycle.timeOfDay = 9.5f;
+            cycle.timeOfDay = 20.5f;
+            cycle.sunIntensity = 1.85f;
+            cycle.moonColor = new Color(0.75f, 0.86f, 1f);
             cycle.Apply();
+            AddCloudShadows(cycle);
             return cycle;
+        }
+
+        static CloudShadows AddCloudShadows(DayNightCycle cycle)
+        {
+            if (!cycle.TryGetComponent<CloudShadows>(out var clouds))
+                clouds = cycle.gameObject.AddComponent<CloudShadows>();
+            clouds.targetLight = cycle.celestialLight;
+            clouds.Apply();
+            return clouds;
+        }
+
+        [MenuItem("Aelid/Setup/Add Cloud Shadows to Open Scene")]
+        static void AddCloudShadowsMenu()
+        {
+            var cycle = Object.FindAnyObjectByType<DayNightCycle>();
+            if (cycle == null)
+            {
+                EditorUtility.DisplayDialog("No day/night cycle", "The open scene has no DayNightCycle to attach cloud shadows to.", "OK");
+                return;
+            }
+            Selection.activeObject = AddCloudShadows(cycle);
+            EditorSceneManager.MarkSceneDirty(cycle.gameObject.scene);
+        }
+
+        /// <summary>Batch-mode entry point: adds cloud shadows to the saved slice scene, without a rebuild.</summary>
+        public static void AddCloudShadowsFromCommandLine()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var cycle = Object.FindAnyObjectByType<DayNightCycle>();
+            if (cycle == null)
+                throw new System.InvalidOperationException("The slice scene has no DayNightCycle.");
+            AddCloudShadows(cycle);
+            EditorSceneManager.SaveScene(scene);
         }
 
         static VolumeProfile BuildBaseProfile()
         {
             var profile = NewProfile("VolumeProfile_Base");
             // Override every ASCII parameter so the look never depends on the
-            // project's default volume profile. Values are the code defaults:
-            // black background, glyph colour carries the light, dense textures.
+            // project's default volume profile.
             var ascii = AddComponent<AsciiSettings>(profile, overrideAll: true);
             ascii.intensity.Override(1f);
             ascii.cellSize.Override(8);
+            ascii.exposure.Override(1.35f);
+            ascii.gamma.Override(1f);
+            ascii.glyphBrightness.Override(1.55f);
+            ascii.backgroundFill.Override(0.018f);
+            ascii.backgroundColor.Override(new Color(0.0035f, 0.005f, 0.009f));
+            ascii.saturation.Override(0.90f);
+            ascii.sparkleDensity.Override(0.016f);
+            ascii.edgeThreshold.Override(0.47f);
+            ascii.exemptAscii.Override(0.86f);
 
             var tonemap = AddComponent<Tonemapping>(profile);
             tonemap.mode.Override(TonemappingMode.Neutral);
@@ -913,12 +961,13 @@ namespace Aelid.EditorTools
             bloom.scatter.Override(0.65f);
 
             var color = AddComponent<ColorAdjustments>(profile);
-            color.saturation.Override(10f);
-            color.contrast.Override(8f);
+            color.saturation.Override(-4f);
+            color.contrast.Override(3f);
 
             var vignette = AddComponent<Vignette>(profile);
             vignette.intensity.Override(0.22f);
             vignette.smoothness.Override(0.45f);
+            ConfigureDayFog(FogOf(profile));
             return SaveProfile(profile);
         }
 
@@ -928,19 +977,19 @@ namespace Aelid.EditorTools
             // Night mood comes mostly from cold moonlight and ambient; the grade
             // stays light so firelight keeps its warmth against the blue.
             var ascii = AddComponent<AsciiSettings>(profile);
-            ascii.exposure.Override(3.2f);
+            ascii.exposure.Override(2.4f);
             ascii.backgroundFill.Override(0f);
-            ascii.glyphBrightness.Override(3.0f);
-            ascii.colorNormalize.Override(0.12f);
+            ascii.glyphBrightness.Override(2.5f);
+            ascii.colorNormalize.Override(0.04f);
             // Fireflies: sparse, self-lit, slowly pulsing; HDR so bloom makes them glow.
-            ascii.sparkleColor.Override(new Color(1.7f, 2.5f, 0.7f, 1f));
-            ascii.sparkleDensity.Override(0.012f);
+            ascii.sparkleColor.Override(new Color(1.1f, 1.7f, 1.25f, 1f));
+            ascii.sparkleDensity.Override(0.009f);
             ascii.sparkleSelfLit.Override(1f);
             ascii.sparkleTwinkle.Override(1f);
 
             var color = AddComponent<ColorAdjustments>(profile);
-            color.saturation.Override(-8f);
-            color.colorFilter.Override(new Color(0.93f, 0.96f, 1.06f));
+            color.saturation.Override(-14f);
+            color.colorFilter.Override(new Color(0.96f, 0.99f, 1.04f));
 
             var balance = AddComponent<WhiteBalance>(profile);
             balance.temperature.Override(-8f);
@@ -950,6 +999,7 @@ namespace Aelid.EditorTools
 
             var bloom = AddComponent<Bloom>(profile);
             bloom.intensity.Override(0.8f);
+            ConfigureNightFog(FogOf(profile));
             return SaveProfile(profile);
         }
 

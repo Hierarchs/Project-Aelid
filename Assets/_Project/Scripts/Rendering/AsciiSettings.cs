@@ -44,8 +44,11 @@ namespace Aelid.Rendering
         [Tooltip("Brightness multiplier for glyph strokes (compensates for glyph coverage).")]
         public ClampedFloatParameter glyphBrightness = new(1.9f, 0.25f, 6f);
 
-        [Tooltip("How much of the cell color fills the space behind the glyph. 0 = black terminal background.")]
+        [Tooltip("How much of the lit cell color fills the space behind the glyph.")]
         public ClampedFloatParameter backgroundFill = new(0.05f, 0f, 1f);
+
+        [Tooltip("Minimum color behind the glyphs, in linear RGB.")]
+        public ColorParameter backgroundColor = new(Color.black, false, false, true);
 
         [Tooltip("Saturation of glyph colors.")]
         public ClampedFloatParameter saturation = new(1.1f, 0f, 2.5f);

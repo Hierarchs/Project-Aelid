@@ -3,10 +3,8 @@ using UnityEngine;
 namespace Aelid.Gameplay
 {
     /// <summary>
-    /// Placeholder locomotion animation for the primitive-built character:
-    /// limb swing, body bob, lean and idle breathing, all driven by the motor's
-    /// speed. Swap for an Animator + real rig once character art exists; the
-    /// motor/controller do not depend on this component.
+    /// Animates the character's pivots for limb swing, body bob, lean and idle
+    /// breathing. The motor and controller do not depend on this component.
     /// </summary>
     [AddComponentMenu("Aelid/Gameplay/Procedural Humanoid Animator")]
     public sealed class ProceduralHumanoidAnimator : MonoBehaviour

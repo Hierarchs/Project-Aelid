@@ -9,7 +9,8 @@
         "Aelid.Rendering",
         "Aelid.Gameplay",
         "Aelid.Environment",
-        "Aelid.Editor"
+        "Aelid.Editor",
+        "Aelid.World"
     ],
     "includePlatforms": [
         "Editor"

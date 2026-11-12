@@ -12,7 +12,7 @@ namespace Aelid.Rendering
     /// the finished image by whole pixels. Result: the view scrolls smoothly
     /// while every glyph stays locked to the world.
     ///
-    /// Exact for orthographic cameras with fixed rotation (our isometric camera).
+    /// Exact for orthographic cameras with fixed rotation and zoom.
     /// For perspective cameras it is exact on the focus plane only.
     /// </summary>
     [RequireComponent(typeof(Camera))]
@@ -67,19 +67,22 @@ namespace Aelid.Rendering
                 return;
             }
 
-            float unitsPerPixel = WorldUnitsPerPixel(cam);
-            if (unitsPerPixel <= 0f)
+            Vector2Int raster = AsciiGrid.RasterSize(cam);
+            float worldHeight = WorldViewHeight(cam);
+            if (worldHeight <= 0f)
                 return;
+            float unitsPerPixelX = worldHeight * cam.aspect / raster.x;
+            float unitsPerPixelY = worldHeight / raster.y;
 
-            int cellPx = AsciiGrid.ResolveCellSize(cam.pixelHeight);
+            int cellPx = AsciiGrid.ResolveCellSize(raster.y);
             Transform t = transform;
             Vector3 right = t.right;
             Vector3 up = t.up;
             Vector3 desired = t.position;
 
             // Camera position expressed in whole pixels on its own view plane.
-            float px = Vector3.Dot(desired, right) / unitsPerPixel;
-            float py = Vector3.Dot(desired, up) / unitsPerPixel;
+            float px = Vector3.Dot(desired, right) / unitsPerPixelX;
+            float py = Vector3.Dot(desired, up) / unitsPerPixelY;
             long pixelX = (long)System.Math.Round(px);
             long pixelY = (long)System.Math.Round(py);
 
@@ -90,8 +93,8 @@ namespace Aelid.Rendering
             int remY = (int)(pixelY - cellY * cellPx);
 
             // Move the camera onto the cell lattice.
-            float snappedX = cellX * cellPx * unitsPerPixel;
-            float snappedY = cellY * cellPx * unitsPerPixel;
+            float snappedX = cellX * cellPx * unitsPerPixelX;
+            float snappedY = cellY * cellPx * unitsPerPixelY;
             Vector3 snapped = desired
                 + right * (snappedX - Vector3.Dot(desired, right))
                 + up * (snappedY - Vector3.Dot(desired, up));
@@ -102,16 +105,16 @@ namespace Aelid.Rendering
             PixelPosition = new Vector2Int((int)pixelX, (int)pixelY);
         }
 
-        float WorldUnitsPerPixel(Camera cam)
+        float WorldViewHeight(Camera cam)
         {
             if (cam.orthographic)
-                return 2f * cam.orthographicSize / cam.pixelHeight;
+                return 2f * cam.orthographicSize;
 
             float distance = focusTarget != null
                 ? Vector3.Dot(focusTarget.position - transform.position, transform.forward)
                 : 10f;
             distance = Mathf.Max(distance, cam.nearClipPlane);
-            return 2f * distance * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) / cam.pixelHeight;
+            return 2f * distance * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
         }
 
         static long FloorDiv(long a, int b)

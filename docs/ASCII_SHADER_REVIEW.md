@@ -15,7 +15,7 @@ mockups; actual Unity captures are needed to evaluate progress toward them.
 
 - Global dithering is 0.7, amplified by 3.2 for grass and 2.6 for stone.
 - Per-cell brightness jitter is 0.28, allowing approximately ±28% variation.
-- Minimum density ramps of 0.65 for grass and 0.55 for stone retain dense glyphs
+- Minimum density ramps of 0.66 for grass and 0.46 for stone retain dense glyphs
   through much of the shadow range.
 - Material grain, fractures, relief normals, glyph variation, sparkles and edge
   detection can contribute detail simultaneously.
@@ -23,34 +23,61 @@ mockups; actual Unity captures are needed to evaluate progress toward them.
   largely independent color and character decisions.
 - Normal-based edge detection can turn small surface changes into strong strokes.
 
-These are code-based hypotheses about the reported appearance. The recent ground
-and stone changes passed compilation checks but have not been inspected in Unity.
+## Initial Unity comparison
+
+F6 in Play Mode switches to the clean diagnostic baseline. It disables glyph
+dithering, brightness jitter, grass sparkles and normal-based edge strokes. Ground
+microdetail and stone grain run at 15% of their material settings, and stone relief
+normals are disabled. Depth edges, world-anchored patches and the existing shadow
+density are available for comparison with the current look.
+
+`AsciiCaptureTool.CaptureBaselineFromCommandLine` captures the saved Hilltop Ruins
+scene at gameplay zoom and 1920 × 1080. It saves a pair at 14:00, a pair at 01:00,
+and a 24-frame horizontal pan in daylight. The first comparison ran on Direct3D 12
+and is in `Captures/AsciiBaseline/`.
+
+Grass clumps and stone lettering read more consistently in the clean captures.
+Several pillar faces lose definition with depth edges alone, and the player is
+still hard to pick out at night. Both modes stayed stable in this fixed-zoom pan.
+
+## Asciicker cell fitting
+
+Shape fitting is on by default. F7 toggles it independently of the F6 clean
+baseline. The shader adapts Asciicker's horizontal and vertical two-color fit
+to the snapped Unity cell grid. A cell gets a half-block when four
+probes agree on a strong boundary and the split continues into a neighboring
+cell. The two colors come from the lit scene on each side. Exempt surfaces,
+water and emissive surfaces use their usual glyph selection.
+
+The mode also averages compatible neighboring cells and chooses alternate glyph
+rows using the existing world-anchored patches. Foliage outlines require a depth
+break that continues beyond a single cell, which quiets small gaps in canopies.
+Use F6 with F7 to compare against the clean baseline at the same light and
+camera position.
+
+The matched Unity captures in `Captures/ShapeFitting/` show fewer lines inside
+the oak crown and more consistent lettering on the ruin pillars. The fixed-zoom
+oak pan stayed stable with the mode on. The player still has low contrast in
+the moonlit ruins.
+
+[Asciicker attribution and license](third-party/asciicker-MIT.txt)
 
 ## Proposed next work
 
-1. Capture the current renderer from fixed views at gameplay zoom: daylight,
-   night, and a short camera pan. Use identical resolution and lighting for each
-   comparison. A local licensed editor can provide these while cloud licensing
-   remains unavailable.
-2. Create a clean diagnostic preset: zero dithering, brightness jitter and
-   sparkles; minimal material grain and relief; silhouette edges first. Retain
-   the current settings as a comparison preset.
-3. Preserve larger lighting/color shapes through gentle grouping or filtering
+1. Preserve larger lighting/color shapes through gentle grouping or filtering
    within the same surface. Protect silhouettes and material boundaries. Trial
    restrained brightness/color bands.
-4. Group glyph variation into coherent grass clumps, stone plates and cliff
+2. Group glyph variation into coherent grass clumps, stone plates and cliff
    layers. Use compatible glyph families within each patch and keep patterns
    anchored to the world.
-5. Restore detail selectively. Retune shadow density to provide quiet areas.
+3. Restore detail selectively. Retune shadow density to provide quiet areas.
    Emphasize silhouettes and major cracks; suppress fine relief in edge detection.
-6. Compare standing still, walking, zooming, and time-of-day changes. Check that
+4. Compare standing still, walking, zooming, and time-of-day changes. Check that
    the player, paths, objects and shadows remain readable and that camera
    stability is retained.
 
-This cleanup was discussed and deferred until the user returns home. It has not
-been implemented. Dense lettering remains part of the desired style; the goal
-is coherent detail and readable shapes. Further material detail should wait
-until that hierarchy has been evaluated with actual captures.
+Dense lettering remains part of the desired style. Further material detail should
+wait until the larger lighting and color shapes read clearly in the renderer.
 
 ## Existing implementation
 

@@ -29,6 +29,8 @@ namespace Aelid.Gameplay
         [Range(10f, 60f)] public float fieldOfView = 24f;
 
         [Header("Zoom")]
+        [Tooltip("Keep the playable view at a fixed zoom and projection for glyph stability.")]
+        public bool lockFraming;
         [Tooltip("Half the visible height in metres.")]
         public float viewHalfHeight = 8f;
         public float minViewHalfHeight = 5f;
@@ -63,13 +65,16 @@ namespace Aelid.Gameplay
             if (!m_Initialized)
                 SnapToTarget();
 
-            if (zoomInput != null)
+            if (!lockFraming)
             {
-                float z = zoomInput.Zoom;
-                if (Mathf.Abs(z) > 0.01f)
-                    m_ZoomTarget = Mathf.Clamp(m_ZoomTarget - z * zoomStep, minViewHalfHeight, maxViewHalfHeight);
+                if (zoomInput != null)
+                {
+                    float z = zoomInput.Zoom;
+                    if (Mathf.Abs(z) > 0.01f)
+                        m_ZoomTarget = Mathf.Clamp(m_ZoomTarget - z * zoomStep, minViewHalfHeight, maxViewHalfHeight);
+                }
+                m_Zoom = Mathf.SmoothDamp(m_Zoom, m_ZoomTarget, ref m_ZoomVelocity, Mathf.Infinity, dt);
             }
-            m_Zoom = Mathf.SmoothDamp(m_Zoom, m_ZoomTarget, ref m_ZoomVelocity, zoomSmoothTime, Mathf.Infinity, dt);
 
             Vector3 targetPosition = target.position;
             Vector3 targetVelocity = (targetPosition - m_LastTargetPosition) / dt;
